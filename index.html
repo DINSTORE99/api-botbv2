@@ -1,67 +1,94 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIN STORE | iPhone Quoted Generator</title>
 
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<title>DIN STORE | iPhone Quoted Generator</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+<link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
-    <div class="container">
+<div class="stars"></div>
 
-        <h1 class="title">
-            <i class="fa-brands fa-apple"></i>
-            iPhone Quoted Generator
-        </h1>
+<div class="container">
 
-        <p class="desc">
-            Buat tampilan chat iPhone dengan mudah dan cepat.
-        </p>
+    <h1 class="title">
+        <i class="fa-brands fa-apple"></i>
+        iPhone Quoted Generator
+    </h1>
 
-        <div class="input-box">
+    <p class="subtitle">
+        Buat tampilan chat iPhone hanya dengan satu klik.
+    </p>
 
-            <input
-                type="text"
-                id="message"
-                placeholder="Tulis kata-katamu..."
-                autocomplete="off"
-            >
+    <div class="card">
 
-            <button onclick="generateImage()">
-                <i class="fa-solid fa-paper-plane"></i>
-                Generate
-            </button>
+        <label for="message">
+            <i class="fa-solid fa-comment"></i>
+            Pesan
+        </label>
+
+        <input
+            type="text"
+            id="message"
+            placeholder="Masukkan pesan..."
+            autocomplete="off"
+        >
+
+        <button id="generateBtn" onclick="generateImage()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Generate Image
+        </button>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+
+            <div class="spinner"></div>
+
+            <span>Generating image...</span>
 
         </div>
 
-        <div id="result" class="result"></div>
+        <!-- Result -->
+        <div id="result" class="result">
 
-        <footer class="footer">
+            <div class="placeholder">
 
-            <a href="https://wa.me/6287776581216" class="footer-btn" target="_blank">
-                <i class="fa-brands fa-whatsapp"></i>
-                WhatsApp Admin
-            </a>
+                <i class="fa-regular fa-image"></i>
 
-            <small>Powered by DIN STORE</small>
+                <p>
+                    Hasil gambar akan muncul di sini
+                </p>
 
-        </footer>
+            </div>
+
+        </div>
 
     </div>
 
-    <script src="script.js"></script>
+    <footer>
+
+        <small>
+            © 2026 DIN STORE
+        </small>
+
+    </footer>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
