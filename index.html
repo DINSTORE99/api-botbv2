@@ -1,28 +1,66 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iPhone Quoted Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIN STORE | iPhone Quoted Generator</title>
 
-  <!-- Hubungkan ke file CSS -->
-  <link rel="stylesheet" href="style.css">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>iPhone Quoted Generator</h1>
-  <div class="container">
-    <input type="text" id="message" placeholder="Tulis kata-katamu bre...">
-    <button onclick="generateImage()">🚀 Kirim</button>
 
-    <div class="result" id="result"></div>
-  </div>
+    <div class="container">
 
-  <!-- 🔥 Bagian Hak Cipta -->
-  <footer class="footer">
-    ©2025DIN
-  </footer>
+        <!-- Logo -->
+        <img src="https://files.catbox.moe/0sx7ra.jpg" alt="DIN STORE" class="logo">
 
-  <!-- Hubungkan ke file JavaScript -->
-  <script src="script.js"></script>
+        <!-- Judul -->
+        <h1 class="title">
+            <i class="fa-brands fa-apple"></i>
+            iPhone Quoted Generator
+        </h1>
+
+        <p class="desc">
+            Buat tampilan chat iPhone dengan mudah dan cepat.
+        </p>
+
+        <!-- Form -->
+        <div class="input-box">
+            <input
+                type="text"
+                id="message"
+                placeholder="Tulis kata-katamu..."
+                autocomplete="off"
+            >
+
+            <button onclick="generateImage()">
+                <i class="fa-solid fa-paper-plane"></i>
+                Generate
+            </button>
+        </div>
+
+        <!-- Hasil -->
+        <div id="result" class="result"></div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            
+            <small>Powered by DIN STORE</small>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+
 </body>
 </html>
