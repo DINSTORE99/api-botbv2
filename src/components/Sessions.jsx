@@ -1,77 +1,57 @@
+import React from "react";
+
 export default function Sessions({
-  sessions,
+  sessions = [],
   setPage,
-  loadStatus,
-  openLogoutModal,
+  deleteSession,
 }) {
   return (
-    <div className="page-content">
+    <div className="sessions-page">
 
-      {/* HEADER */}
-
-      <header className="topbar">
+      <div className="page-header">
 
         <div>
-
           <span className="eyebrow">
-            WHATSAPP SESSIONS
+            DIN BOT / SESSIONS
           </span>
 
           <h1>Daftar Session</h1>
 
           <p>
-            Semua perangkat WhatsApp yang sedang
-            terhubung ke server.
+            Semua perangkat WhatsApp yang sedang terhubung.
+          </p>
+        </div>
+
+        <button
+          className="back-btn"
+          onClick={() => setPage("dashboard")}
+        >
+          ← Dashboard
+        </button>
+
+      </div>
+
+      {sessions.length === 0 ? (
+
+        <div className="empty-card">
+
+          <div className="empty-icon">
+            📱
+          </div>
+
+          <h2>Belum Ada Session</h2>
+
+          <p>
+            Hubungkan WhatsApp terlebih dahulu.
           </p>
 
         </div>
 
-        <div className="dashboard-buttons">
-
-          <button
-            className="refresh-button"
-            onClick={loadStatus}
-          >
-            ↻ Refresh
-          </button>
-
-          <button
-            className="monitor-button"
-            onClick={() => setPage("dashboard")}
-          >
-            ← Dashboard
-          </button>
-
-        </div>
-
-      </header>
-
-      {sessions.length === 0 ? (
-
-        <section className="content-card">
-
-          <div className="empty-code">
-
-            <div className="empty-icon">
-              📱
-            </div>
-
-            <h2>Belum Ada Session</h2>
-
-            <p>
-              Belum ada perangkat WhatsApp
-              yang terhubung.
-            </p>
-
-          </div>
-
-        </section>
-
       ) : (
 
-        <section className="session-grid">
+        <div className="session-grid">
 
-          {sessions.map((session, index) => (
+          {sessions.map((item, index) => (
 
             <div
               className="session-card"
@@ -87,63 +67,37 @@ export default function Sessions({
                 <div>
 
                   <h3>
-                    {session.name || "WhatsApp"}
+                    {item.name || "WhatsApp"}
                   </h3>
 
-                  <small>
-                    {session.number}
-                  </small>
+                  <span>
+                    {item.id}
+                  </span>
 
                 </div>
 
               </div>
 
-              <div className="session-info">
+              <div className="session-status">
 
-                <div>
+                <span className="online-dot"></span>
 
-                  <span>Status</span>
-
-                  <strong
-                    className={
-                      session.connected
-                        ? "online"
-                        : "offline"
-                    }
-                  >
-                    {session.connected
-                      ? "Connected"
-                      : "Disconnected"}
-                  </strong>
-
-                </div>
-
-                <div>
-
-                  <span>Session ID</span>
-
-                  <strong>
-                    {session.sessionId}
-                  </strong>
-
-                </div>
+                Connected
 
               </div>
 
               <button
-                className="logout-button"
-                onClick={() =>
-                  openLogoutModal(session)
-                }
+                className="delete-btn"
+                onClick={() => deleteSession(item.id)}
               >
-                Logout Session
+                Hapus Session
               </button>
 
             </div>
 
           ))}
 
-        </section>
+        </div>
 
       )}
 
