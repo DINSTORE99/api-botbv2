@@ -1,170 +1,193 @@
+import React from "react";
+
 export default function Dashboard({
-  loading,
-  loadStatus,
   serverOnline,
   botConnected,
   ping,
   sessions,
   lastUpdate,
   setPage,
+  loadStatus,
+  loading,
 }) {
   return (
-    <div className="page-content">
+    <div className="dashboard">
 
       {/* HEADER */}
 
-      <header className="topbar">
+      <div className="hero-top">
 
-        <div>
+        <div className="brand">
 
-          <span className="eyebrow">
-            PANEL BOT
-          </span>
+          <img src="/logo.png" alt="logo" />
 
-          <h1>WhatsApp Bot Dashboard</h1>
-
-          <p>
-            Kelola koneksi WhatsApp dan monitoring server
-            dari satu dashboard.
-          </p>
+          <div>
+            <h2>DIN BOT</h2>
+            <small>V1.0.0</small>
+          </div>
 
         </div>
 
-        <div className="dashboard-buttons">
-
-          <button
-            className="refresh-button"
-            onClick={loadStatus}
-            disabled={loading}
-          >
-            {loading ? "Memuat..." : "↻ Refresh"}
-          </button>
-
-          <button
-            className="monitor-button"
-            onClick={() => setPage("monitor")}
-          >
-            📊 Monitoring
-          </button>
-
+        <div className="status-pill">
+          <span className="dot"></span>
+          {serverOnline ? "Online" : "Offline"} | {ping} ms
         </div>
 
-      </header>
+      </div>
 
-      {/* STATUS */}
+      <h3 className="welcome">
+        Selamat datang!
+      </h3>
 
-      <section className="stats-grid">
+      <h1 className="title">
+        WhatsApp Bot
+      </h1>
 
-        <div className="stat-card">
+      <p className="subtitle">
+        Kelola koneksi WhatsApp dan perangkat bot kamu.
+      </p>
 
-          <div className="stat-icon purple">
-            ⚡
+      {/* ACTION */}
+
+      <div className="action-grid">
+
+        <button
+          className="action-card"
+          onClick={loadStatus}
+        >
+
+          <div className="icon purple">
+            ↻
           </div>
 
           <div>
 
-            <span>API SERVER</span>
+            <h4>Refresh</h4>
 
-            <h3>
-              {serverOnline ? "Online" : "Offline"}
-            </h3>
-
-            <small
-              className={
-                serverOnline
-                  ? "online"
-                  : "offline"
-              }
-            >
-              ● {serverOnline
-                ? `${ping} ms`
-                : "Server Offline"}
-            </small>
+            <span>
+              {loading
+                ? "Memuat..."
+                : "Perbarui data bot"}
+            </span>
 
           </div>
+
+        </button>
+
+        <button
+          className="action-card"
+          onClick={() => setPage("monitor")}
+        >
+
+          <div className="icon green">
+            🖥️
+          </div>
+
+          <div>
+
+            <h4>Monitoring Server</h4>
+
+            <span>
+              Lihat status server
+            </span>
+
+          </div>
+
+        </button>
+
+      </div>
+
+      {/* STATS */}
+
+      <div className="stats-grid">
+
+        <div className="stat-card">
+
+          <div className="icon purple">
+            💾
+          </div>
+
+          <span>API SERVER</span>
+
+          <h2>
+            {serverOnline ? "Online" : "Offline"}
+          </h2>
+
+          <small>
+            {serverOnline
+              ? "🟢 Server aktif"
+              : "🔴 Server mati"}
+          </small>
 
         </div>
 
         <div className="stat-card">
 
-          <div className="stat-icon green">
+          <div className="icon green">
             💬
           </div>
 
-          <div>
+          <span>WHATSAPP</span>
 
-            <span>WHATSAPP</span>
+          <h2>
+            {botConnected
+              ? "Terhubung"
+              : "Belum"}
+          </h2>
 
-            <h3>
-              {botConnected
-                ? "Connected"
-                : "Disconnected"}
-            </h3>
-
-            <small
-              className={
-                botConnected
-                  ? "online"
-                  : "offline"
-              }
-            >
-              ● {botConnected
-                ? "ACTIVE"
-                : "WAITING"}
-            </small>
-
-          </div>
+          <small>
+            {botConnected
+              ? "🟢 Bot connected"
+              : "🟡 Waiting"}
+          </small>
 
         </div>
 
         <div
           className="stat-card"
-          style={{ cursor: "pointer" }}
           onClick={() => setPage("sessions")}
         >
 
-          <div className="stat-icon blue">
-            📱
+          <div className="icon blue">
+            👥
           </div>
 
-          <div>
+          <span>SESSIONS</span>
 
-            <span>SESSIONS</span>
+          <h2>
+            {sessions.length} Session
+          </h2>
 
-            <h3>{sessions.length}</h3>
-
-            <small>
-              Lihat Semua Session
-            </small>
-
-          </div>
+          <small>
+            Perangkat terhubung
+          </small>
 
         </div>
 
-      </section>
+      </div>
 
-      {/* HERO */}
+      {/* CONNECT */}
 
-      <section className="hero-card">
+      <div className="connect-card">
 
-        <div className="hero-content">
+        <img
+          src="/robot.png"
+          alt="robot"
+        />
 
-          <span className="hero-label">
-            DIN BOT V1
-          </span>
+        <div className="connect-right">
 
-          <h2>
-            Kelola Bot WhatsApp Lebih Mudah
-          </h2>
+          <span>SIAP DIGUNAKAN</span>
+
+          <h2>DIN BOT V1.0.0</h2>
 
           <p>
-            Pairing WhatsApp, monitoring server,
-            melihat session aktif, dan mengelola
-            bot dalam satu dashboard modern.
+            Kelola Bot WhatsApp kamu dengan mudah
+            dan aman.
           </p>
 
           <button
-            className="hero-button"
+            className="connect-btn"
             onClick={() => setPage("pairing")}
           >
             Hubungkan WhatsApp →
@@ -172,71 +195,51 @@ export default function Dashboard({
 
         </div>
 
-        <div className="hero-orb">
+      </div>
 
-          <div className="orb-inner">
-            🤖
-          </div>
+      {/* SYSTEM INFO */}
 
-        </div>
+      <div className="info-card">
 
-      </section>
-
-      {/* SYSTEM */}
-
-      <section className="content-card">
-
-        <div className="section-title">
-
-          <div>
-
-            <span className="eyebrow">
-              SYSTEM
-            </span>
-
-            <h2>
-              Informasi Sistem
-            </h2>
-
-          </div>
-
-          <div className="status-pill">
-
-            <span />
-
-            {serverOnline
-              ? "ACTIVE"
-              : "OFFLINE"}
-
-          </div>
-
-        </div>
+        <h3>SYSTEM INFO</h3>
 
         <div className="info-grid">
 
-          <div className="info-item">
+          <div>
+
             <span>Website</span>
+
             <strong>DIN BOT</strong>
+
           </div>
 
-          <div className="info-item">
+          <div>
+
             <span>Version</span>
-            <strong>v1.0.0</strong>
+
+            <strong>V1.0.0</strong>
+
           </div>
 
-          <div className="info-item">
+          <div>
+
             <span>Platform</span>
+
             <strong>WhatsApp</strong>
+
           </div>
 
-          <div className="info-item">
+          <div>
+
             <span>Last Update</span>
+
             <strong>{lastUpdate}</strong>
+
           </div>
 
         </div>
 
-      </section>
+      </div>
 
     </div>
   );
