@@ -193,3 +193,114 @@ export default function App() {
     return () => clearInterval(interval);
 
   }, []);
+return (
+  <div className="app">
+
+    <header className="header">
+
+      <div className="logo-box">
+        <div className="logo">D</div>
+
+        <div>
+          <h2>DIN BOT</h2>
+          <span>V1.0.0</span>
+        </div>
+      </div>
+
+      <div className="status-chip">
+        <span className="dot"></span>
+        {serverOnline ? "Online" : "Offline"} | {ping} ms
+      </div>
+
+    </header>
+
+    <section className="hero">
+
+      <span>Selamat datang!</span>
+
+      <h1>WhatsApp Bot</h1>
+
+      <p>
+        Kelola koneksi WhatsApp dan perangkat bot kamu.
+      </p>
+
+    </section>
+
+    <section className="action-grid">
+
+      <button
+        className="action-card"
+        onClick={loadStatus}
+      >
+        <div className="icon">🔄</div>
+
+        <div>
+          <h3>Refresh</h3>
+          <p>Perbarui data bot</p>
+        </div>
+      </button>
+
+      <button
+        className="action-card"
+      >
+        <div className="icon green">📊</div>
+
+        <div>
+          <h3>Monitoring Server</h3>
+          <p>Lihat status server</p>
+        </div>
+      </button>
+
+    </section>
+
+    <section className="stats">
+
+      <div className="card">
+        <small>API SERVER</small>
+
+        <h2>
+          {serverOnline ? "Online" : "Offline"}
+        </h2>
+      </div>
+
+      <div className="card">
+        <small>WHATSAPP</small>
+
+        <h2>
+          {botConnected ? "Terhubung" : "Offline"}
+        </h2>
+      </div>
+
+      <div className="card">
+        <small>SESSIONS</small>
+
+        <h2>{sessions.length}</h2>
+      </div>
+
+    </section>
+
+    <section className="hero-card">
+
+      <div className="robot">🤖</div>
+
+      <div>
+
+        <small>SIAP DIGUNAKAN</small>
+
+        <h2>DIN BOT V1.0.0</h2>
+
+        <p>
+          Kelola Bot WhatsApp dengan mudah.
+        </p>
+
+        <button className="connect-btn">
+          Hubungkan WhatsApp →
+        </button>
+
+      </div>
+
+    </section>
+
+  </div>
+);
+}
