@@ -1,32 +1,29 @@
+import React from "react";
+
 export default function Monitor({
   serverOnline,
   botConnected,
   ping,
   uptime,
   lastUpdate,
-  sessions,
   loadStatus,
   setPage,
 }) {
   return (
     <div className="page-content">
 
-      {/* HEADER */}
-
       <header className="topbar">
 
         <div>
-
           <span className="eyebrow">
-            MONITORING SERVER
+            DIN BOT / MONITORING
           </span>
 
-          <h1>Realtime Monitoring</h1>
+          <h1>Monitoring Server</h1>
 
           <p>
-            Informasi server dan bot secara realtime.
+            Monitoring server bot secara realtime.
           </p>
-
         </div>
 
         <div className="dashboard-buttons">
@@ -49,69 +46,115 @@ export default function Monitor({
 
       </header>
 
-      {/* STATUS */}
+      <section className="content-card">
 
-      <section className="monitor-grid">
+        <div className="section-title">
 
-        <div className="monitor-card">
+          <div>
+            <span className="eyebrow">
+              API STATUS
+            </span>
 
-          <div className="monitor-icon">
-            ⚡
+            <h2>Monitoring Server</h2>
+
+            <p>
+              Monitoring server bot secara realtime
+            </p>
           </div>
 
-          <span>Ping</span>
+          <div
+            className={
+              serverOnline
+                ? "status-pill"
+                : "status-pill offline"
+            }
+          >
+            <span></span>
 
-          <h2>
-            {serverOnline ? `${ping} ms` : "--"}
-          </h2>
-
-        </div>
-
-        <div className="monitor-card">
-
-          <div className="monitor-icon">
-            🌐
+            {serverOnline
+              ? `Online | ${ping} ms`
+              : "Offline"}
           </div>
-
-          <span>API Server</span>
-
-          <h2>
-            {serverOnline ? "ONLINE" : "OFFLINE"}
-          </h2>
-
-        </div>
-
-        <div className="monitor-card">
-
-          <div className="monitor-icon">
-            🤖
-          </div>
-
-          <span>Bot Status</span>
-
-          <h2>
-            {botConnected
-              ? "CONNECTED"
-              : "DISCONNECTED"}
-          </h2>
-
-        </div>
-
-        <div className="monitor-card">
-
-          <div className="monitor-icon">
-            📱
-          </div>
-
-          <span>Session</span>
-
-          <h2>{sessions.length}</h2>
 
         </div>
 
       </section>
 
-      {/* UPTIME */}
+      <section className="stats-grid">
+
+        <div className="stat-card">
+
+          <div className="stat-icon purple">
+            📅
+          </div>
+
+          <div>
+
+            <span>HARI</span>
+
+            <h3>{uptime.hari}</h3>
+
+            <small>UPTIME</small>
+
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <div className="stat-icon blue">
+            🕒
+          </div>
+
+          <div>
+
+            <span>JAM</span>
+
+            <h3>{uptime.jam}</h3>
+
+            <small>UPTIME</small>
+
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <div className="stat-icon green">
+            ⏱️
+          </div>
+
+          <div>
+
+            <span>MENIT</span>
+
+            <h3>{uptime.menit}</h3>
+
+            <small>UPTIME</small>
+
+          </div>
+
+        </div>
+
+        <div className="stat-card">
+
+          <div className="stat-icon purple">
+            ⏲️
+          </div>
+
+          <div>
+
+            <span>DETIK</span>
+
+            <h3>{uptime.detik}</h3>
+
+            <small>UPTIME</small>
+
+          </div>
+
+        </div>
+
+      </section>
 
       <section className="content-card">
 
@@ -120,102 +163,10 @@ export default function Monitor({
           <div>
 
             <span className="eyebrow">
-              UPTIME
+              INFORMASI
             </span>
 
-            <h2>
-              Lama Server Aktif
-            </h2>
-
-          </div>
-
-        </div>
-
-        <div className="stats-grid">
-
-          <div className="stat-card">
-
-            <div className="stat-icon purple">
-              📅
-            </div>
-
-            <div>
-
-              <span>Hari</span>
-
-              <h3>{uptime.hari}</h3>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon blue">
-              🕒
-            </div>
-
-            <div>
-
-              <span>Jam</span>
-
-              <h3>{uptime.jam}</h3>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon green">
-              ⏱️
-            </div>
-
-            <div>
-
-              <span>Menit</span>
-
-              <h3>{uptime.menit}</h3>
-
-            </div>
-
-          </div>
-
-          <div className="stat-card">
-
-            <div className="stat-icon purple">
-              ⏲️
-            </div>
-
-            <div>
-
-              <span>Detik</span>
-
-              <h3>{uptime.detik}</h3>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* INFORMASI */}
-
-      <section className="content-card">
-
-        <div className="section-title">
-
-          <div>
-
-            <span className="eyebrow">
-              DETAIL SERVER
-            </span>
-
-            <h2>
-              Informasi Sistem
-            </h2>
+            <h2>Detail Server</h2>
 
           </div>
 
@@ -231,17 +182,28 @@ export default function Monitor({
           </div>
 
           <div className="info-item">
+            <span>Ping</span>
+            <strong>{ping} ms</strong>
+          </div>
+
+          <div className="info-item">
             <span>Bot</span>
             <strong>
-              {botConnected ? "Connected" : "Disconnected"}
+              {botConnected
+                ? "Connected"
+                : "Disconnected"}
             </strong>
           </div>
 
           <div className="info-item">
-            <span>Session Aktif</span>
-            <strong>{sessions.length}</strong>
+            <span>Last Update</span>
+            <strong>{lastUpdate}</strong>
           </div>
 
-          <div className="info-item">
-            <span>Last Update</span>
-            <
+        </div>
+
+      </section>
+
+    </div>
+  );
+}
