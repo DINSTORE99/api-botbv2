@@ -882,3 +882,60 @@ body::after{
 /* =====================================================
    END STYLE
 ===================================================== */
+
+
+/* =====================================================
+   NAVBAR
+===================================================== */
+
+.navbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+    padding:18px 22px;
+
+    background:#111827;
+
+    border-radius:18px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+.navbar-left h1{
+
+    color:#00e5ff;
+
+    font-size:28px;
+
+}
+
+.version{
+
+    color:#9ca3af;
+
+    font-size:14px;
+
+}
+
+.navbar-right{
+
+    display:flex;
+
+    gap:12px;
+
+}
+
+.status-item{
+
+    display:flex;
+
+    align-items:center;
+
+}
