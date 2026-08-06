@@ -1,20 +1,20 @@
-
-import {
-  getStatus,
-  getSessions,
-  getPairingCode,
-  createPairing as apiCreatePairing,
-  logoutSession as apiLogoutSession
-} from "./api";
-
 // =====================================================
 // IMPORT
 // =====================================================
 
 import { useEffect, useState } from "react";
+
+import {
+  getStatus,
+  getSessions,
+  createPairing,
+  logoutSession
+} from "./api";
+
 import "./style.css";
 import Loading from "./components/Loading";
 import Toast from "./components/Toast";
+
 // =====================================================
 // MAIN APP
 // =====================================================
