@@ -1,18 +1,16 @@
 // =====================================================
 // IMPORT
 // =====================================================
-
+import socket from "./socket";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import {
+  getStatus,
+  getSessions,
+  createPairing,
+  getPairingCode,
+  logoutSession
+} from "./api/api";
 import "./style.css";
-
-
-// =====================================================
-// API CONFIG
-// =====================================================
-
-const API = import.meta.env.VITE_API_URL;
-
 
 // =====================================================
 // MAIN APP
@@ -97,8 +95,7 @@ async function loadStatus() {
 
   try {
 
-    const { data } = await axios.get(`${API}/api/status`);
-
+    const data = await getStatus();
     setServerOnline(true);
 
     setBotConnected(data.connected || false);
@@ -127,8 +124,7 @@ async function loadSessions() {
 
   try {
 
-    const { data } = await axios.get(`${API}/api/sessions`);
-
+    const data = await getSessions();
     setSessions(data.sessions || []);
 
   } catch (err) {
@@ -158,9 +154,7 @@ async function createPairing() {
 
   try {
 
-    const { data } = await axios.post(`${API}/api/pair`, {
-      number: phone
-    });
+    const data = await createPairing(phone);
 
     setSessionId(data.sessionId);
 
@@ -187,9 +181,7 @@ async function loadPairCode() {
 
   try {
 
-    const { data } = await axios.get(
-      `${API}/api/pairing/${sessionId}`
-    );
+    const data = await getPairingCode(sessionId);
 
     if (data.code) {
 
@@ -210,7 +202,7 @@ async function logoutSession(id) {
 
   try {
 
-    await axios.delete(`${API}/api/logout/${id}`);
+    await logoutSession(id);
 
     showToast("Session berhasil dihapus");
 
