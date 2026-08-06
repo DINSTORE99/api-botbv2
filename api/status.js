@@ -1,26 +1,6 @@
-export default async function handler(req, res) {
-  try {
-    const backendUrl = process.env.URL_BACKEND_API;
-
-    if (!backendUrl) {
-      return res.status(500).json({
-        success: false,
-        message: "URL_BACKEND_API belum diatur di Vercel"
-      });
-    }
-
-    const response = await fetch(`${backendUrl}/api/status`);
-    const data = await response.json();
-
-    return res.status(response.status).json(data);
-
-  } catch (error) {
-    console.error("STATUS API ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Backend Pterodactyl tidak dapat dihubungi",
-      error: error.message
-    });
-  }
+export default function handler(req, res) {
+  res.status(200).json({
+    URL_BACKEND_API: process.env.URL_BACKEND_API ?? "TIDAK ADA",
+    NODE_ENV: process.env.NODE_ENV
+  });
 }
