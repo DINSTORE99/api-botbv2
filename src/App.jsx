@@ -562,6 +562,63 @@ function renderMonitor() {
 
 }
   // =====================================================
+// NAVBAR
+// =====================================================
+
+function renderNavbar() {
+
+  return (
+
+    <div className="navbar">
+
+      <div className="navbar-left">
+
+        <h1>🤖 DIN BOT WEB</h1>
+
+        <span className="version">
+          Version {stats.version}
+        </span>
+
+      </div>
+
+      <div className="navbar-right">
+
+        <div className="status-item">
+
+          <span className={
+            serverOnline
+              ? "badge online"
+              : "badge offline"
+          }>
+            {serverOnline
+              ? "Server Online"
+              : "Server Offline"}
+          </span>
+
+        </div>
+
+        <div className="status-item">
+
+          <span className={
+            botConnected
+              ? "badge online"
+              : "badge offline"
+          }>
+            {botConnected
+              ? "Bot Connected"
+              : "Bot Offline"}
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  );
+
+}
+  // =====================================================
 // MAIN RENDER
 // =====================================================
 
@@ -609,46 +666,11 @@ return (
       </button>
 
     </aside>
-
-
     {/* ================= CONTENT ================= */}
 
     <main className="content">
 
-      {/* HEADER */}
-
-      <div className="topbar">
-
-        <div>
-
-          <h1>DIN BOT WEB</h1>
-
-          <p>
-            Kelola Session WhatsApp dengan mudah
-          </p>
-
-        </div>
-
-        <div className="status-box">
-
-          <span
-            className={
-              serverOnline
-                ? "online"
-                : "offline"
-            }
-          >
-            {serverOnline
-              ? "🟢 Server Online"
-              : "🔴 Server Offline"}
-          </span>
-
-        </div>
-
-      </div>
-
-
-      {/* PAGE */}
+      {renderNavbar()}
 
       {page === "dashboard" && renderDashboard()}
 
@@ -659,7 +681,6 @@ return (
       {page === "monitor" && renderMonitor()}
 
     </main>
-
 
     {/* ================= TOAST ================= */}
 
