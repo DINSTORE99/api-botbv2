@@ -1,9 +1,17 @@
+
+import {
+  getStatus,
+  getSessions,
+  getPairingCode,
+  createPairing as apiCreatePairing,
+  logoutSession as apiLogoutSession
+} from "./api";
+
 // =====================================================
 // IMPORT
 // =====================================================
 
 import { useEffect, useState } from "react";
-const API = "";
 import "./style.css";
 import Loading from "./components/Loading";
 import Toast from "./components/Toast";
