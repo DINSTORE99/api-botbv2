@@ -11,7 +11,6 @@ import {
   logoutSession
 } from "./api/api";
 import "./style.css";
-import socket from "./socket";
 import Loading from "./components/Loading";
 import Toast from "./components/Toast";
 // =====================================================
@@ -238,51 +237,7 @@ useEffect(() => {
 
 }, [sessionId]);
 
-// =====================================================
-// SOCKET
-// =====================================================
 
-useEffect(() => {
-
-  socket.on("status", (data) => {
-
-    setServerOnline(true);
-
-    setBotConnected(data.connected);
-
-  });
-
-  socket.on("sessions", (data) => {
-
-    setSessions(data);
-
-  });
-
-  socket.on("pairing", (data) => {
-
-    setPairingCode(data.code);
-
-  });
-
-  socket.on("toast", (data) => {
-
-    showToast(data.message);
-
-  });
-
-  return () => {
-
-    socket.off("status");
-
-    socket.off("sessions");
-
-    socket.off("pairing");
-
-    socket.off("toast");
-
-  };
-
-}, []);
 // =====================================================
 // DASHBOARD PAGE
 // =====================================================
