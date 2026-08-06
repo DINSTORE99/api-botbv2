@@ -3,13 +3,7 @@
 // =====================================================
 
 import { useEffect, useState } from "react";
-import {
-  getStatus,
-  getSessions,
-  createPairing,
-  getPairingCode,
-  logoutSession
-} from "./api/api";
+const API = "";
 import "./style.css";
 import Loading from "./components/Loading";
 import Toast from "./components/Toast";
