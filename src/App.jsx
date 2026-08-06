@@ -12,6 +12,8 @@ import {
 } from "./api/api";
 import "./style.css";
 import socket from "./socket";
+import Loading from "./components/Loading";
+import Toast from "./components/Toast";
 // =====================================================
 // MAIN APP
 // =====================================================
@@ -375,20 +377,44 @@ function renderPairing() {
           type="text"
           placeholder="628xxxxxxxxxx"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          maxLength={20}
+          onChange={(e) =>
+            setPhone(
+              e.target.value.replace(/[^0-9]/g, "")
+            )
+          }
         />
 
-        <button
-          className="btn"
-          onClick={createPairing}
-          disabled={loading}
-        >
+        <div className="button-group">
 
-          {loading ? "Loading..." : "Pair Sekarang"}
+          <button
+            className="btn"
+            onClick={createPairing}
+            disabled={loading}
+          >
 
-        </button>
+            {loading ? "⏳ Membuat Pairing..." : "📱 Pair Sekarang"}
+
+          </button>
+
+          <button
+            className="btn secondary"
+            onClick={() => {
+
+              setPhone("");
+              setPairingCode("");
+
+            }}
+          >
+
+            🔄 Reset
+
+          </button>
+
+        </div>
 
       </div>
+
 
       <div className="card">
 
@@ -396,28 +422,31 @@ function renderPairing() {
 
         <div className="pair-box">
 
-          {pairingCode || "Menunggu Pairing..."}
+          {pairingCode || "Menunggu Pairing Code..."}
 
         </div>
 
-        {pairingCode && (
+        <div className="button-group">
 
           <button
             className="btn"
+            disabled={!pairingCode}
             onClick={() => {
 
               navigator.clipboard.writeText(pairingCode);
 
-              showToast("Pairing Code berhasil disalin");
+              showToast(
+                "Pairing Code berhasil disalin"
+              );
 
             }}
           >
 
-            Copy Pairing Code
+            📋 Copy Code
 
           </button>
 
-        )}
+        </div>
 
       </div>
 
@@ -684,15 +713,10 @@ return (
 
     {/* ================= TOAST ================= */}
 
-    {message && (
-
-      <div className={`toast ${messageType}`}>
-
-        {message}
-
-      </div>
-
-    )}
+    <Toast
+  message={message}
+  type={messageType}
+/>
 
   </div>
 );
