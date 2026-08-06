@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = process.env.URL_BACKEND_API;
 
     if (!backendUrl) {
       return res.status(500).json({
