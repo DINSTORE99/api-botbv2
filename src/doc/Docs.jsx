@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./Docs.css";
 
 const ENDPOINTS = [
   {
@@ -7,25 +6,33 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/status",
     title: "API Status",
-    description: "Mengecek status server dan service DIN BOT.",
+    description: "Mengecek status server DIN BOT.",
     body: null,
-    example: null,
+    example: {
+      success: true,
+      server: "online",
+      service: "DIN BOT API",
+      timestamp: 1234567890,
+    },
   },
   {
     id: "sessions",
     method: "GET",
     path: "/api/sessions",
-    title: "List Sessions",
-    description: "Mengambil daftar session WhatsApp yang terdaftar.",
+    title: "Sessions",
+    description: "Mengambil semua session WhatsApp.",
     body: null,
-    example: null,
+    example: {
+      success: true,
+      sessions: [],
+    },
   },
   {
     id: "pair",
     method: "POST",
     path: "/api/pair",
     title: "Pair WhatsApp",
-    description: "Memulai proses pairing perangkat WhatsApp.",
+    description: "Memulai proses pairing WhatsApp.",
     body: {
       number: "6281234567890",
     },
@@ -40,7 +47,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/pairing/{sessionId}",
     title: "Pairing Status",
-    description: "Mengambil status dan kode pairing berdasarkan session ID.",
+    description: "Mengecek status pairing berdasarkan session ID.",
     body: null,
     example: {
       success: true,
@@ -53,7 +60,7 @@ const ENDPOINTS = [
     method: "POST",
     path: "/api/logout",
     title: "Logout Session",
-    description: "Menghapus atau logout session WhatsApp.",
+    description: "Logout dan menghapus session WhatsApp.",
     body: {
       sessionId: "6281234567890",
     },
@@ -66,27 +73,40 @@ const ENDPOINTS = [
 
 function MethodBadge({ method }) {
   return (
-    <span className={`method-badge ${method.toLowerCase()}`}>
+    <span
+      className={`method-badge ${method.toLowerCase()}`}
+    >
       {method}
     </span>
   );
 }
 
 export default function Docs() {
-  const [selected, setSelected] = useState(ENDPOINTS[0]);
+  const [selected, setSelected] = useState(
+    ENDPOINTS[0]
+  );
+
   const [search, setSearch] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [body, setBody] = useState("");
   const [response, setResponse] = useState(null);
-  const [responseStatus, setResponseStatus] = useState(null);
-  const [responseTime, setResponseTime] = useState(null);
+  const [responseStatus, setResponseStatus] =
+    useState(null);
+  const [responseTime, setResponseTime] =
+    useState(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const filteredEndpoints = ENDPOINTS.filter((item) => {
-    const text = `${item.method} ${item.path} ${item.title}`.toLowerCase();
-    return text.includes(search.toLowerCase());
-  });
+  const filteredEndpoints = ENDPOINTS.filter(
+    (item) => {
+      const text =
+        `${item.method} ${item.path} ${item.title}`.toLowerCase();
+
+      return text.includes(
+        search.toLowerCase()
+      );
+    }
+  );
 
   const selectEndpoint = (endpoint) => {
     setSelected(endpoint);
@@ -94,28 +114,30 @@ export default function Docs() {
     setResponseStatus(null);
     setResponseTime(null);
     setCopied(false);
+    setSessionId("");
 
     if (endpoint.body) {
-      setBody(JSON.stringify(endpoint.body, null, 2));
+      setBody(
+        JSON.stringify(
+          endpoint.body,
+          null,
+          2
+        )
+      );
     } else {
       setBody("");
     }
-
-    setSessionId("");
   };
 
   const getPath = () => {
     if (selected.id === "pairing") {
-      if (!sessionId.trim()) {
-        return selected.path.replace(
-          "{sessionId}",
-          "YOUR_SESSION_ID"
-        );
-      }
+      const id =
+        sessionId.trim() ||
+        "YOUR_SESSION_ID";
 
       return selected.path.replace(
         "{sessionId}",
-        encodeURIComponent(sessionId.trim())
+        encodeURIComponent(id)
       );
     }
 
@@ -129,18 +151,20 @@ export default function Docs() {
       setResponseStatus(null);
       setResponseTime(null);
 
-      let requestBody;
+      let requestBody = {};
 
       if (
         selected.method === "POST" &&
         body.trim()
       ) {
         try {
-          requestBody = JSON.parse(body);
+          requestBody =
+            JSON.parse(body);
         } catch {
           setResponse({
             success: false,
-            error: "JSON request tidak valid.",
+            message:
+              "JSON request tidak valid.",
           });
 
           setLoading(false);
@@ -148,19 +172,22 @@ export default function Docs() {
         }
       }
 
-      const start = performance.now();
+      const start =
+        performance.now();
 
       const options = {
         method: selected.method,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         },
       };
 
       if (selected.method === "POST") {
-        options.body = JSON.stringify(
-          requestBody || {}
-        );
+        options.body =
+          JSON.stringify(
+            requestBody
+          );
       }
 
       const res = await fetch(
@@ -168,30 +195,47 @@ export default function Docs() {
         options
       );
 
-      const end = performance.now();
+      const end =
+        performance.now();
 
-      setResponseStatus(res.status);
+      setResponseStatus(
+        res.status
+      );
+
       setResponseTime(
         Math.round(end - start)
       );
 
       const contentType =
-        res.headers.get("content-type") || "";
+        res.headers.get(
+          "content-type"
+        ) || "";
 
-      if (contentType.includes("application/json")) {
-        const data = await res.json();
+      if (
+        contentType.includes(
+          "application/json"
+        )
+      ) {
+        const data =
+          await res.json();
+
         setResponse(data);
       } else {
-        const text = await res.text();
+        const text =
+          await res.text();
+
         setResponse(text);
       }
+
     } catch (error) {
       setResponse({
         success: false,
-        error: error.message,
+        message:
+          error.message,
       });
 
       setResponseStatus(0);
+
     } finally {
       setLoading(false);
     }
@@ -219,6 +263,7 @@ export default function Docs() {
       setTimeout(() => {
         setCopied(false);
       }, 2000);
+
     } catch {
       setCopied(false);
     }
@@ -238,6 +283,614 @@ export default function Docs() {
   return (
     <div className="docs-page">
 
+      <style>{`
+
+        * {
+          box-sizing: border-box;
+        }
+
+        .docs-page {
+          min-height: 100vh;
+          background: #08090d;
+          color: #f5f7fb;
+          font-family:
+            Inter,
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
+        }
+
+        .docs-header {
+          height: 72px;
+          border-bottom: 1px solid #1c1f29;
+          background: rgba(8, 9, 13, 0.94);
+          backdrop-filter: blur(16px);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 30px;
+          position: sticky;
+          top: 0;
+          z-index: 20;
+        }
+
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .brand-logo {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          background:
+            linear-gradient(
+              135deg,
+              #7c3aed,
+              #4f46e5
+            );
+          font-weight: 900;
+          font-size: 18px;
+        }
+
+        .brand-text {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .brand-text strong {
+          font-size: 14px;
+          letter-spacing: 1px;
+        }
+
+        .brand-text span {
+          color: #717887;
+          font-size: 9px;
+          letter-spacing: 1.5px;
+          margin-top: 2px;
+        }
+
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+
+        .api-live {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #8ee6ae;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .api-live span {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #36d778;
+          box-shadow:
+            0 0 12px #36d778;
+        }
+
+        .header-version {
+          color: #7d8494;
+          font-size: 11px;
+        }
+
+        .docs-layout {
+          display: grid;
+          grid-template-columns: 290px minmax(0, 1fr);
+          min-height:
+            calc(100vh - 72px);
+        }
+
+        .docs-sidebar {
+          border-right: 1px solid #1c1f29;
+          background: #0b0d12;
+          padding: 28px 18px;
+          position: sticky;
+          top: 72px;
+          height:
+            calc(100vh - 72px);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .sidebar-title {
+          padding: 0 10px 18px;
+        }
+
+        .sidebar-title span {
+          color: #737b8d;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1.7px;
+        }
+
+        .sidebar-title strong {
+          display: block;
+          font-size: 18px;
+          margin-top: 5px;
+        }
+
+        .search-box {
+          height: 42px;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          border: 1px solid #20232e;
+          background: #101219;
+          border-radius: 10px;
+          padding: 0 12px;
+          margin-bottom: 18px;
+        }
+
+        .search-box span {
+          color: #737b8d;
+        }
+
+        .search-box input {
+          width: 100%;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: white;
+          font-size: 12px;
+        }
+
+        .endpoint-list {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          overflow-y: auto;
+        }
+
+        .endpoint-item {
+          width: 100%;
+          border: 1px solid transparent;
+          background: transparent;
+          color: #aeb4c1;
+          padding: 10px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .endpoint-item:hover {
+          background: #12151c;
+          color: white;
+        }
+
+        .endpoint-item.active {
+          background: #151823;
+          border-color: #292d3a;
+          color: white;
+        }
+
+        .endpoint-info {
+          min-width: 0;
+        }
+
+        .endpoint-info strong {
+          display: block;
+          font-size: 11px;
+        }
+
+        .endpoint-info span {
+          display: block;
+          margin-top: 3px;
+          color: #646b7b;
+          font-family: monospace;
+          font-size: 9px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .method-badge {
+          min-width: 45px;
+          height: 22px;
+          padding: 0 7px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: 900;
+          letter-spacing: .5px;
+        }
+
+        .method-badge.get {
+          color: #69a9ff;
+          background:
+            rgba(59, 130, 246, .12);
+        }
+
+        .method-badge.post {
+          color: #64e49b;
+          background:
+            rgba(34, 197, 94, .12);
+        }
+
+        .sidebar-footer {
+          margin-top: auto;
+          padding: 18px 10px 0;
+          border-top: 1px solid #1c1f29;
+          display: flex;
+          justify-content: space-between;
+          color: #777e8d;
+          font-size: 10px;
+        }
+
+        .sidebar-footer small {
+          color: #4f5562;
+        }
+
+        .docs-main {
+          width: 100%;
+          max-width: 1050px;
+          padding: 55px;
+        }
+
+        .docs-intro {
+          margin-bottom: 48px;
+        }
+
+        .eyebrow {
+          color: #737b8d;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1.7px;
+        }
+
+        .docs-intro h1 {
+          font-size:
+            clamp(32px, 5vw, 50px);
+          line-height: 1;
+          letter-spacing: -2px;
+          margin: 12px 0;
+        }
+
+        .docs-intro p {
+          color: #8d94a3;
+          max-width: 620px;
+          line-height: 1.7;
+          font-size: 13px;
+        }
+
+        .endpoint-header {
+          margin-bottom: 28px;
+        }
+
+        .endpoint-heading {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .endpoint-heading h2 {
+          font-size: 24px;
+          margin: 0;
+        }
+
+        .endpoint-header p {
+          color: #858c9c;
+          font-size: 12px;
+          line-height: 1.6;
+          margin: 10px 0 16px;
+        }
+
+        .url-bar {
+          min-height: 48px;
+          border: 1px solid #242834;
+          background: #0d1016;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 0 14px;
+        }
+
+        .url-bar span {
+          color: #62dd99;
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .url-bar code {
+          color: #d5dae3;
+          font-size: 12px;
+          overflow-x: auto;
+        }
+
+        .tester-card,
+        .response-card,
+        .example-card {
+          border: 1px solid #20232d;
+          background: #0d1016;
+          border-radius: 14px;
+          padding: 22px;
+          margin-bottom: 20px;
+        }
+
+        .card-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 22px;
+        }
+
+        .card-heading h3 {
+          margin: 5px 0 0;
+          font-size: 17px;
+        }
+
+        .form-group {
+          margin-bottom: 18px;
+        }
+
+        .form-group label {
+          display: block;
+          color: #7e8696;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 1.2px;
+          margin-bottom: 8px;
+        }
+
+        .dark-input,
+        .code-input {
+          width: 100%;
+          outline: none;
+          border: 1px solid #242834;
+          background: #080a0f;
+          color: #e7eaf0;
+          border-radius: 9px;
+          padding: 12px;
+          font-family: monospace;
+          font-size: 12px;
+        }
+
+        .dark-input:focus,
+        .code-input:focus {
+          border-color: #5b4acb;
+        }
+
+        .code-input {
+          min-height: 150px;
+          resize: vertical;
+          line-height: 1.6;
+        }
+
+        .small-button,
+        .copy-button {
+          border: 1px solid #292d39;
+          background: #141720;
+          color: #aab0bd;
+          border-radius: 7px;
+          padding: 7px 10px;
+          font-size: 9px;
+          cursor: pointer;
+        }
+
+        .small-button:hover,
+        .copy-button:hover {
+          color: white;
+          background: #1a1d27;
+        }
+
+        .send-button {
+          width: 100%;
+          height: 46px;
+          border: 0;
+          border-radius: 9px;
+          background:
+            linear-gradient(
+              135deg,
+              #6949e8,
+              #4f46c8
+            );
+          color: white;
+          font-size: 11px;
+          font-weight: 800;
+          cursor: pointer;
+          box-shadow:
+            0 8px 25px
+            rgba(79, 70, 229, .2);
+        }
+
+        .send-button:disabled {
+          opacity: .55;
+          cursor: wait;
+        }
+
+        .loader {
+          width: 13px;
+          height: 13px;
+          display: inline-block;
+          border: 2px solid
+            rgba(255,255,255,.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation:
+            docs-spin .7s linear infinite;
+          margin-right: 7px;
+          vertical-align: -2px;
+        }
+
+        @keyframes docs-spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .response-meta {
+          display: flex;
+          gap: 30px;
+          border-bottom:
+            1px solid #20232d;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
+        }
+
+        .response-meta div {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .response-meta span {
+          color: #686f7e;
+          font-size: 8px;
+          font-weight: 800;
+          letter-spacing: 1px;
+        }
+
+        .response-meta strong {
+          font-size: 11px;
+        }
+
+        .status-success {
+          color: #64e49b;
+        }
+
+        .status-error {
+          color: #ff6b7a;
+        }
+
+        .response-window {
+          min-height: 250px;
+          max-height: 500px;
+          overflow: auto;
+          background: #07090d;
+          border: 1px solid #191c24;
+          border-radius: 9px;
+        }
+
+        .response-window pre,
+        .example-card pre {
+          margin: 0;
+          padding: 18px;
+          color: #c9ced8;
+          font-family: monospace;
+          font-size: 11px;
+          line-height: 1.7;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
+        .empty-response {
+          min-height: 250px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 7px;
+          color: #5e6574;
+        }
+
+        .empty-response strong {
+          color: #858c9b;
+          font-size: 12px;
+        }
+
+        .empty-response span {
+          font-size: 10px;
+        }
+
+        .terminal-icon {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 10px;
+          background: #11141c;
+          color: #6d5ce7;
+          font-family: monospace;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+
+        .docs-footer {
+          border-top: 1px solid #1c1f29;
+          margin-top: 45px;
+          padding: 22px 0;
+          display: flex;
+          justify-content: space-between;
+          color: #555c6b;
+          font-size: 9px;
+        }
+
+        @media (max-width: 800px) {
+
+          .docs-header {
+            padding: 0 16px;
+          }
+
+          .header-version {
+            display: none;
+          }
+
+          .docs-layout {
+            display: block;
+          }
+
+          .docs-sidebar {
+            position: relative;
+            top: 0;
+            height: auto;
+            border-right: 0;
+            border-bottom:
+              1px solid #1c1f29;
+            padding: 18px;
+          }
+
+          .sidebar-footer {
+            display: none;
+          }
+
+          .docs-main {
+            padding: 35px 16px;
+          }
+
+          .docs-intro {
+            margin-bottom: 35px;
+          }
+
+          .docs-intro h1 {
+            letter-spacing: -1px;
+          }
+
+          .endpoint-heading {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .response-meta {
+            gap: 18px;
+            flex-wrap: wrap;
+          }
+
+          .docs-footer {
+            flex-direction: column;
+            gap: 8px;
+          }
+        }
+
+      `}</style>
+
+
       {/* HEADER */}
 
       <header className="docs-header">
@@ -248,7 +901,8 @@ export default function Docs() {
             W
           </div>
 
-          <div>
+          <div className="brand-text">
+
             <strong>
               DIN BOT
             </strong>
@@ -256,6 +910,7 @@ export default function Docs() {
             <span>
               API DOCUMENTATION
             </span>
+
           </div>
 
         </div>
@@ -267,9 +922,9 @@ export default function Docs() {
             API ONLINE
           </div>
 
-          <code>
+          <div className="header-version">
             v1.0.0
-          </code>
+          </div>
 
         </div>
 
@@ -283,6 +938,7 @@ export default function Docs() {
         <aside className="docs-sidebar">
 
           <div className="sidebar-title">
+
             <span>
               DOCUMENTATION
             </span>
@@ -290,7 +946,9 @@ export default function Docs() {
             <strong>
               Endpoints
             </strong>
+
           </div>
+
 
           <div className="search-box">
 
@@ -301,7 +959,9 @@ export default function Docs() {
             <input
               value={search}
               onChange={(e) =>
-                setSearch(e.target.value)
+                setSearch(
+                  e.target.value
+                )
               }
               placeholder="Cari endpoint..."
             />
@@ -317,20 +977,26 @@ export default function Docs() {
                 <button
                   key={endpoint.id}
                   className={
-                    selected.id === endpoint.id
+                    selected.id ===
+                    endpoint.id
                       ? "endpoint-item active"
                       : "endpoint-item"
                   }
                   onClick={() =>
-                    selectEndpoint(endpoint)
+                    selectEndpoint(
+                      endpoint
+                    )
                   }
                 >
 
                   <MethodBadge
-                    method={endpoint.method}
+                    method={
+                      endpoint.method
+                    }
                   />
 
-                  <div>
+                  <div className="endpoint-info">
+
                     <strong>
                       {endpoint.title}
                     </strong>
@@ -338,6 +1004,7 @@ export default function Docs() {
                     <span>
                       {endpoint.path}
                     </span>
+
                   </div>
 
                 </button>
@@ -378,22 +1045,25 @@ export default function Docs() {
             </h1>
 
             <p>
-              Dokumentasi lengkap API DIN BOT
-              untuk mengelola koneksi dan
-              session WhatsApp.
+              Dokumentasi API DIN BOT
+              untuk mengelola koneksi,
+              pairing, session dan
+              perangkat WhatsApp.
             </p>
 
           </div>
 
 
-          {/* ENDPOINT TITLE */}
+          {/* ENDPOINT */}
 
           <section className="endpoint-header">
 
             <div className="endpoint-heading">
 
               <MethodBadge
-                method={selected.method}
+                method={
+                  selected.method
+                }
               />
 
               <h2>
@@ -439,18 +1109,17 @@ export default function Docs() {
 
               </div>
 
-              <div className="request-method">
-                <MethodBadge
-                  method={selected.method}
-                />
-              </div>
+              <MethodBadge
+                method={
+                  selected.method
+                }
+              />
 
             </div>
 
 
-            {/* SESSION ID */}
-
-            {selected.id === "pairing" && (
+            {selected.id ===
+              "pairing" && (
 
               <div className="form-group">
 
@@ -460,13 +1129,15 @@ export default function Docs() {
 
                 <input
                   className="dark-input"
-                  value={sessionId}
+                  value={
+                    sessionId
+                  }
                   onChange={(e) =>
                     setSessionId(
                       e.target.value
                     )
                   }
-                  placeholder="Masukkan session ID"
+                  placeholder="6281234567890"
                 />
 
               </div>
@@ -474,34 +1145,14 @@ export default function Docs() {
             )}
 
 
-            {/* JSON BODY */}
-
-            {selected.method === "POST" && (
+            {selected.method ===
+              "POST" && (
 
               <div className="form-group">
 
-                <div className="label-row">
-
-                  <label>
-                    REQUEST BODY
-                  </label>
-
-                  <button
-                    className="small-button"
-                    onClick={() => {
-                      setBody(
-                        JSON.stringify(
-                          selected.body || {},
-                          null,
-                          2
-                        )
-                      );
-                    }}
-                  >
-                    Format JSON
-                  </button>
-
-                </div>
+                <label>
+                  REQUEST BODY
+                </label>
 
                 <textarea
                   className="code-input"
@@ -521,8 +1172,12 @@ export default function Docs() {
 
             <button
               className="send-button"
-              onClick={sendRequest}
-              disabled={loading}
+              onClick={
+                sendRequest
+              }
+              disabled={
+                loading
+              }
             >
 
               {loading ? (
@@ -563,7 +1218,9 @@ export default function Docs() {
 
                 <button
                   className="copy-button"
-                  onClick={copyResponse}
+                  onClick={
+                    copyResponse
+                  }
                 >
                   {copied
                     ? "✓ Copied"
@@ -587,8 +1244,10 @@ export default function Docs() {
 
                   <strong
                     className={
-                      responseStatus >= 200 &&
-                      responseStatus < 300
+                      responseStatus >=
+                        200 &&
+                      responseStatus <
+                        300
                         ? "status-success"
                         : "status-error"
                     }
@@ -699,13 +1358,15 @@ export default function Docs() {
 
 
           <footer className="docs-footer">
+
             <span>
               DIN BOT API
             </span>
 
             <span>
-              Built for WhatsApp automation
+              WhatsApp Automation API
             </span>
+
           </footer>
 
         </main>
@@ -715,619 +1376,3 @@ export default function Docs() {
     </div>
   );
 }
-
-"Docs.css"
-
-Buat file:
-
-src/doc/Docs.css
-
-lalu isi:
-
-* {
-  box-sizing: border-box;
-}
-
-.docs-page {
-  min-height: 100vh;
-  background: #08090d;
-  color: #f5f7fb;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-.docs-header {
-  height: 72px;
-  border-bottom: 1px solid #1c1f29;
-  background: rgba(8, 9, 13, 0.92);
-  backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #4f46e5
-  );
-  font-weight: 900;
-  font-size: 18px;
-}
-
-.brand div:last-child {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand strong {
-  font-size: 14px;
-  letter-spacing: 1px;
-}
-
-.brand span {
-  color: #717887;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  margin-top: 2px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.api-live {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #8ee6ae;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.api-live span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #36d778;
-  box-shadow: 0 0 12px #36d778;
-}
-
-.header-right code {
-  color: #7d8494;
-  font-size: 11px;
-}
-
-.docs-layout {
-  display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  min-height: calc(100vh - 72px);
-}
-
-.docs-sidebar {
-  border-right: 1px solid #1c1f29;
-  background: #0b0d12;
-  padding: 28px 18px;
-  position: sticky;
-  top: 72px;
-  height: calc(100vh - 72px);
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-title {
-  padding: 0 10px 18px;
-}
-
-.sidebar-title span,
-.eyebrow {
-  color: #737b8d;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1.7px;
-}
-
-.sidebar-title strong {
-  display: block;
-  font-size: 18px;
-  margin-top: 5px;
-}
-
-.search-box {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border: 1px solid #20232e;
-  background: #101219;
-  border-radius: 10px;
-  padding: 0 12px;
-  margin-bottom: 18px;
-}
-
-.search-box span {
-  color: #737b8d;
-}
-
-.search-box input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: white;
-  font-size: 12px;
-}
-
-.endpoint-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  overflow-y: auto;
-}
-
-.endpoint-item {
-  width: 100%;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #aeb4c1;
-  padding: 10px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.endpoint-item:hover {
-  background: #12151c;
-  color: white;
-}
-
-.endpoint-item.active {
-  background: #151823;
-  border-color: #292d3a;
-  color: white;
-}
-
-.endpoint-item > div:last-child {
-  min-width: 0;
-}
-
-.endpoint-item strong {
-  display: block;
-  font-size: 11px;
-}
-
-.endpoint-item span:last-child {
-  display: block;
-  margin-top: 3px;
-  color: #646b7b;
-  font-family: monospace;
-  font-size: 9px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.method-badge {
-  min-width: 45px;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: .5px;
-}
-
-.method-badge.get {
-  color: #69a9ff;
-  background: rgba(59, 130, 246, .12);
-}
-
-.method-badge.post {
-  color: #64e49b;
-  background: rgba(34, 197, 94, .12);
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding: 18px 10px 0;
-  border-top: 1px solid #1c1f29;
-  display: flex;
-  justify-content: space-between;
-  color: #777e8d;
-  font-size: 10px;
-}
-
-.sidebar-footer small {
-  color: #4f5562;
-}
-
-.docs-main {
-  width: 100%;
-  max-width: 1050px;
-  padding: 55px 55px 30px;
-}
-
-.docs-intro {
-  margin-bottom: 48px;
-}
-
-.docs-intro h1 {
-  font-size: clamp(32px, 5vw, 50px);
-  line-height: 1;
-  letter-spacing: -2px;
-  margin: 12px 0;
-}
-
-.docs-intro p {
-  color: #8d94a3;
-  max-width: 620px;
-  line-height: 1.7;
-  font-size: 13px;
-}
-
-.endpoint-header {
-  margin-bottom: 28px;
-}
-
-.endpoint-heading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.endpoint-heading h2 {
-  font-size: 24px;
-  margin: 0;
-}
-
-.endpoint-header p {
-  color: #858c9c;
-  font-size: 12px;
-  line-height: 1.6;
-  margin: 10px 0 16px;
-}
-
-.url-bar {
-  min-height: 48px;
-  border: 1px solid #242834;
-  background: #0d1016;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 14px;
-}
-
-.url-bar span {
-  color: #62dd99;
-  font-size: 9px;
-  font-weight: 900;
-}
-
-.url-bar code {
-  color: #d5dae3;
-  font-size: 12px;
-  overflow-x: auto;
-}
-
-.tester-card,
-.response-card,
-.example-card {
-  border: 1px solid #20232d;
-  background: #0d1016;
-  border-radius: 14px;
-  padding: 22px;
-  margin-bottom: 20px;
-}
-
-.card-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 22px;
-}
-
-.card-heading h3 {
-  margin: 5px 0 0;
-  font-size: 17px;
-}
-
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  color: #7e8696;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  margin-bottom: 8px;
-}
-
-.label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dark-input,
-.code-input {
-  width: 100%;
-  outline: none;
-  border: 1px solid #242834;
-  background: #080a0f;
-  color: #e7eaf0;
-  border-radius: 9px;
-  padding: 12px;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-.dark-input:focus,
-.code-input:focus {
-  border-color: #5b4acb;
-}
-
-.code-input {
-  min-height: 150px;
-  resize: vertical;
-  line-height: 1.6;
-}
-
-.small-button,
-.copy-button {
-  border: 1px solid #292d39;
-  background: #141720;
-  color: #aab0bd;
-  border-radius: 7px;
-  padding: 7px 10px;
-  font-size: 9px;
-  cursor: pointer;
-}
-
-.small-button:hover,
-.copy-button:hover {
-  color: white;
-  background: #1a1d27;
-}
-
-.send-button {
-  width: 100%;
-  height: 46px;
-  border: 0;
-  border-radius: 9px;
-  background: linear-gradient(
-    135deg,
-    #6949e8,
-    #4f46c8
-  );
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 8px 25px rgba(79, 70, 229, .2);
-}
-
-.send-button:disabled {
-  opacity: .55;
-  cursor: wait;
-}
-
-.loader {
-  width: 13px;
-  height: 13px;
-  display: inline-block;
-  border: 2px solid rgba(255,255,255,.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-  margin-right: 7px;
-  vertical-align: -2px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.response-meta {
-  display: flex;
-  gap: 30px;
-  border-bottom: 1px solid #20232d;
-  padding-bottom: 15px;
-  margin-bottom: 15px;
-}
-
-.response-meta div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.response-meta span {
-  color: #686f7e;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.response-meta strong {
-  font-size: 11px;
-}
-
-.status-success {
-  color: #64e49b;
-}
-
-.status-error {
-  color: #ff6b7a;
-}
-
-.response-window {
-  min-height: 250px;
-  max-height: 500px;
-  overflow: auto;
-  background: #07090d;
-  border: 1px solid #191c24;
-  border-radius: 9px;
-}
-
-.response-window pre,
-.example-card pre {
-  margin: 0;
-  padding: 18px;
-  color: #c9ced8;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.empty-response {
-  min-height: 250px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 7px;
-  color: #5e6574;
-}
-
-.empty-response strong {
-  color: #858c9b;
-  font-size: 12px;
-}
-
-.empty-response span {
-  font-size: 10px;
-}
-
-.terminal-icon {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: #11141c;
-  color: #6d5ce7;
-  font-family: monospace;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.docs-footer {
-  border-top: 1px solid #1c1f29;
-  margin-top: 45px;
-  padding: 22px 0;
-  display: flex;
-  justify-content: space-between;
-  color: #555c6b;
-  font-size: 9px;
-}
-
-@media (max-width: 800px) {
-
-  .docs-header {
-    padding: 0 16px;
-  }
-
-  .header-right code {
-    display: none;
-  }
-
-  .docs-layout {
-    display: block;
-  }
-
-  .docs-sidebar {
-    position: relative;
-    top: 0;
-    height: auto;
-    border-right: 0;
-    border-bottom: 1px solid #1c1f29;
-    padding: 18px;
-  }
-
-  .endpoint-list {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-footer {
-    display: none;
-  }
-
-  .docs-main {
-    padding: 35px 16px;
-  }
-
-  .docs-intro {
-    margin-bottom: 35px;
-  }
-
-  .docs-intro h1 {
-    letter-spacing: -1px;
-  }
-
-  .endpoint-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .response-meta {
-    gap: 18px;
-    flex-wrap: wrap;
-  }
-
-  .docs-footer {
-    flex-direction: column;
-    gap: 8px;
-  }
-}
-
-Pastikan import-nya di "Docs.jsx":
-
-import "./Docs.css";
-
-Dan di "App.jsx" tetap:
-
-import Docs from "./doc/Docs";
-
-Kalau routing kamu sekarang menggunakan:
-
-{page === "doc" && <Docs />}
-
-maka halaman dokumentasi ini langsung bisa dipakai di "/doc" sesuai routing yang sudah kamu buat.
