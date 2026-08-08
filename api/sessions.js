@@ -9,7 +9,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const response = await fetch(`${backendUrl}/api/sessions`);
+    const response = await fetch(
+      `${backendUrl}/api/sessions`
+    );
+
     const data = await response.json();
 
     return res.status(response.status).json(data);
