@@ -1,240 +1,182 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const ENDPOINTS = [
+  {
+    id: "health",
+    method: "GET",
+    path: "/api/health",
+    name: "Health Check",
+    description: "Mengecek apakah API sedang aktif.",
+  },
   {
     id: "status",
     method: "GET",
     path: "/api/status",
-    title: "API Status",
-    description: "Mengecek status server DIN BOT.",
-    body: null,
-    example: {
-      success: true,
-      server: "online",
-      service: "DIN BOT API",
-      timestamp: 1234567890,
-    },
+    name: "Server Status",
+    description: "Mengambil status server dan koneksi bot.",
   },
   {
     id: "sessions",
     method: "GET",
     path: "/api/sessions",
-    title: "Sessions",
-    description: "Mengambil semua session WhatsApp.",
-    body: null,
-    example: {
-      success: true,
-      sessions: [],
-    },
+    name: "Sessions",
+    description: "Mengambil daftar session WhatsApp.",
   },
   {
     id: "pair",
     method: "POST",
     path: "/api/pair",
-    title: "Pair WhatsApp",
+    name: "Pair WhatsApp",
     description: "Memulai proses pairing WhatsApp.",
     body: {
       number: "6281234567890",
-    },
-    example: {
-      success: true,
-      sessionId: "6281234567890",
-      pairingCode: "ABCD1234",
-    },
-  },
-  {
-    id: "pairing",
-    method: "GET",
-    path: "/api/pairing/{sessionId}",
-    title: "Pairing Status",
-    description: "Mengecek status pairing berdasarkan session ID.",
-    body: null,
-    example: {
-      success: true,
-      connected: false,
-      code: "ABCD1234",
     },
   },
   {
     id: "logout",
     method: "POST",
     path: "/api/logout",
-    title: "Logout Session",
-    description: "Logout dan menghapus session WhatsApp.",
+    name: "Logout Session",
+    description: "Logout atau menghapus session WhatsApp.",
     body: {
       sessionId: "6281234567890",
-    },
-    example: {
-      success: true,
-      message: "Session berhasil dihapus",
     },
   },
 ];
 
-function MethodBadge({ method }) {
-  return (
-    <span
-      className={`method-badge ${method.toLowerCase()}`}
-    >
-      {method}
-    </span>
-  );
-}
-
-export default function Docs() {
-  const [selected, setSelected] = useState(
-    ENDPOINTS[0]
-  );
-
+function Docs() {
+  const [selectedId, setSelectedId] = useState("health");
   const [search, setSearch] = useState("");
-  const [sessionId, setSessionId] = useState("");
-  const [body, setBody] = useState("");
-  const [response, setResponse] = useState(null);
-  const [responseStatus, setResponseStatus] =
-    useState(null);
-  const [responseTime, setResponseTime] =
-    useState(null);
+  const [requestBody, setRequestBody] = useState("");
+  const [responseData, setResponseData] = useState(null);
+  const [responseStatus, setResponseStatus] = useState(null);
+  const [responseTime, setResponseTime] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredEndpoints = ENDPOINTS.filter(
-    (item) => {
-      const text =
-        `${item.method} ${item.path} ${item.title}`.toLowerCase();
-
-      return text.includes(
-        search.toLowerCase()
-      );
-    }
+  const selected = ENDPOINTS.find(
+    (item) => item.id === selectedId
   );
+
+  const filteredEndpoints = useMemo(() => {
+    const value = search.toLowerCase().trim();
+
+    if (!value) return ENDPOINTS;
+
+    return ENDPOINTS.filter((item) =>
+      `${item.name} ${item.path} ${item.method}`
+        .toLowerCase()
+        .includes(value)
+    );
+  }, [search]);
 
   const selectEndpoint = (endpoint) => {
-    setSelected(endpoint);
-    setResponse(null);
+    setSelectedId(endpoint.id);
+    setResponseData(null);
     setResponseStatus(null);
     setResponseTime(null);
-    setCopied(false);
-    setSessionId("");
+    setErrorMessage("");
 
     if (endpoint.body) {
-      setBody(
-        JSON.stringify(
-          endpoint.body,
-          null,
-          2
-        )
+      setRequestBody(
+        JSON.stringify(endpoint.body, null, 2)
       );
     } else {
-      setBody("");
+      setRequestBody("");
     }
-  };
-
-  const getPath = () => {
-    if (selected.id === "pairing") {
-      const id =
-        sessionId.trim() ||
-        "YOUR_SESSION_ID";
-
-      return selected.path.replace(
-        "{sessionId}",
-        encodeURIComponent(id)
-      );
-    }
-
-    return selected.path;
   };
 
   const sendRequest = async () => {
+    if (!selected) return;
+
+    setLoading(true);
+    setResponseData(null);
+    setResponseStatus(null);
+    setResponseTime(null);
+    setErrorMessage("");
+
+    const start = performance.now();
+
     try {
-      setLoading(true);
-      setResponse(null);
-      setResponseStatus(null);
-      setResponseTime(null);
-
-      let requestBody = {};
-
-      if (
-        selected.method === "POST" &&
-        body.trim()
-      ) {
-        try {
-          requestBody =
-            JSON.parse(body);
-        } catch {
-          setResponse({
-            success: false,
-            message:
-              "JSON request tidak valid.",
-          });
-
-          setLoading(false);
-          return;
-        }
-      }
-
-      const start =
-        performance.now();
-
       const options = {
         method: selected.method,
         headers: {
-          "Content-Type":
-            "application/json",
+          Accept: "application/json",
         },
       };
 
       if (selected.method === "POST") {
-        options.body =
-          JSON.stringify(
-            requestBody
+        let body;
+
+        try {
+          body = requestBody
+            ? JSON.parse(requestBody)
+            : {};
+        } catch {
+          throw new Error(
+            "JSON request body tidak valid."
           );
+        }
+
+        options.headers["Content-Type"] =
+          "application/json";
+
+        options.body = JSON.stringify(body);
       }
 
-      const res = await fetch(
-        getPath(),
+      const response = await fetch(
+        selected.path,
         options
       );
 
-      const end =
-        performance.now();
+      const end = performance.now();
 
-      setResponseStatus(
-        res.status
-      );
-
+      setResponseStatus(response.status);
       setResponseTime(
         Math.round(end - start)
       );
 
       const contentType =
-        res.headers.get(
-          "content-type"
-        ) || "";
+        response.headers.get("content-type") || "";
+
+      let data;
 
       if (
         contentType.includes(
           "application/json"
         )
       ) {
-        const data =
-          await res.json();
-
-        setResponse(data);
+        data = await response.json();
       } else {
-        const text =
-          await res.text();
+        const text = await response.text();
 
-        setResponse(text);
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
       }
 
-    } catch (error) {
-      setResponse({
-        success: false,
-        message:
-          error.message,
-      });
+      setResponseData(data);
 
-      setResponseStatus(0);
+    } catch (error) {
+      const end = performance.now();
+
+      setResponseTime(
+        Math.round(end - start)
+      );
+
+      setErrorMessage(
+        error.message ||
+          "Request gagal."
+      );
+
+      setResponseData({
+        success: false,
+        error:
+          error.message ||
+          "Request gagal.",
+      });
 
     } finally {
       setLoading(false);
@@ -242,47 +184,35 @@ export default function Docs() {
   };
 
   const copyResponse = async () => {
-    if (response === null) return;
-
-    const text =
-      typeof response === "string"
-        ? response
-        : JSON.stringify(
-            response,
-            null,
-            2
-          );
+    if (responseData === null) return;
 
     try {
       await navigator.clipboard.writeText(
-        text
+        JSON.stringify(
+          responseData,
+          null,
+          2
+        )
       );
-
-      setCopied(true);
-
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-
-    } catch {
-      setCopied(false);
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const responseText =
-    response === null
-      ? ""
-      : typeof response === "string"
-        ? response
-        : JSON.stringify(
-            response,
-            null,
-            2
-          );
+  const copyEndpoint = async () => {
+    if (!selected) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        selected.path
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
-    <div className="docs-page">
-
+    <>
       <style>{`
 
         * {
@@ -306,7 +236,7 @@ export default function Docs() {
         .docs-header {
           height: 72px;
           border-bottom: 1px solid #1c1f29;
-          background: rgba(8, 9, 13, 0.94);
+          background: rgba(8, 9, 13, .92);
           backdrop-filter: blur(16px);
           display: flex;
           align-items: center;
@@ -329,27 +259,26 @@ export default function Docs() {
           border-radius: 12px;
           display: grid;
           place-items: center;
-          background:
-            linear-gradient(
-              135deg,
-              #7c3aed,
-              #4f46e5
-            );
+          background: linear-gradient(
+            135deg,
+            #7c3aed,
+            #4f46e5
+          );
           font-weight: 900;
           font-size: 18px;
         }
 
-        .brand-text {
+        .brand div:last-child {
           display: flex;
           flex-direction: column;
         }
 
-        .brand-text strong {
+        .brand strong {
           font-size: 14px;
           letter-spacing: 1px;
         }
 
-        .brand-text span {
+        .brand span {
           color: #717887;
           font-size: 9px;
           letter-spacing: 1.5px;
@@ -376,18 +305,18 @@ export default function Docs() {
           height: 7px;
           border-radius: 50%;
           background: #36d778;
-          box-shadow:
-            0 0 12px #36d778;
+          box-shadow: 0 0 12px #36d778;
         }
 
-        .header-version {
+        .header-right code {
           color: #7d8494;
           font-size: 11px;
         }
 
         .docs-layout {
           display: grid;
-          grid-template-columns: 290px minmax(0, 1fr);
+          grid-template-columns:
+            290px minmax(0, 1fr);
           min-height:
             calc(100vh - 72px);
         }
@@ -408,7 +337,8 @@ export default function Docs() {
           padding: 0 10px 18px;
         }
 
-        .sidebar-title span {
+        .sidebar-title span,
+        .eyebrow {
           color: #737b8d;
           font-size: 9px;
           font-weight: 800;
@@ -478,16 +408,16 @@ export default function Docs() {
           color: white;
         }
 
-        .endpoint-info {
+        .endpoint-item > div:last-child {
           min-width: 0;
         }
 
-        .endpoint-info strong {
+        .endpoint-item strong {
           display: block;
           font-size: 11px;
         }
 
-        .endpoint-info span {
+        .endpoint-item span:last-child {
           display: block;
           margin-top: 3px;
           color: #646b7b;
@@ -508,18 +438,27 @@ export default function Docs() {
           font-size: 8px;
           font-weight: 900;
           letter-spacing: .5px;
+          flex-shrink: 0;
         }
 
         .method-badge.get {
           color: #69a9ff;
-          background:
-            rgba(59, 130, 246, .12);
+          background: rgba(
+            59,
+            130,
+            246,
+            .12
+          );
         }
 
         .method-badge.post {
           color: #64e49b;
-          background:
-            rgba(34, 197, 94, .12);
+          background: rgba(
+            34,
+            197,
+            94,
+            .12
+          );
         }
 
         .sidebar-footer {
@@ -539,18 +478,11 @@ export default function Docs() {
         .docs-main {
           width: 100%;
           max-width: 1050px;
-          padding: 55px;
+          padding: 55px 55px 30px;
         }
 
         .docs-intro {
           margin-bottom: 48px;
-        }
-
-        .eyebrow {
-          color: #737b8d;
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 1.7px;
         }
 
         .docs-intro h1 {
@@ -601,7 +533,7 @@ export default function Docs() {
           padding: 0 14px;
         }
 
-        .url-bar span {
+        .url-bar > span {
           color: #62dd99;
           font-size: 9px;
           font-weight: 900;
@@ -611,6 +543,11 @@ export default function Docs() {
           color: #d5dae3;
           font-size: 12px;
           overflow-x: auto;
+        }
+
+        .url-bar button {
+          margin-left: auto;
+          flex-shrink: 0;
         }
 
         .tester-card,
@@ -648,6 +585,12 @@ export default function Docs() {
           margin-bottom: 8px;
         }
 
+        .label-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
         .dark-input,
         .code-input {
           width: 100%;
@@ -661,15 +604,14 @@ export default function Docs() {
           font-size: 12px;
         }
 
-        .dark-input:focus,
-        .code-input:focus {
-          border-color: #5b4acb;
-        }
-
         .code-input {
           min-height: 150px;
           resize: vertical;
           line-height: 1.6;
+        }
+
+        .code-input:focus {
+          border-color: #5b4acb;
         }
 
         .small-button,
@@ -694,12 +636,11 @@ export default function Docs() {
           height: 46px;
           border: 0;
           border-radius: 9px;
-          background:
-            linear-gradient(
-              135deg,
-              #6949e8,
-              #4f46c8
-            );
+          background: linear-gradient(
+            135deg,
+            #6949e8,
+            #4f46c8
+          );
           color: white;
           font-size: 11px;
           font-weight: 800;
@@ -714,6 +655,11 @@ export default function Docs() {
           cursor: wait;
         }
 
+        .send-arrow {
+          margin-left: 8px;
+          font-size: 14px;
+        }
+
         .loader {
           width: 13px;
           height: 13px;
@@ -723,22 +669,51 @@ export default function Docs() {
           border-top-color: white;
           border-radius: 50%;
           animation:
-            docs-spin .7s linear infinite;
+            spin .7s linear infinite;
           margin-right: 7px;
           vertical-align: -2px;
         }
 
-        @keyframes docs-spin {
+        @keyframes spin {
           to {
             transform: rotate(360deg);
           }
         }
 
+        .get-info {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 15px;
+          margin-bottom: 18px;
+          border: 1px solid #20232d;
+          background: #080a0f;
+          border-radius: 9px;
+        }
+
+        .get-info .terminal-icon {
+          margin: 0;
+          width: 45px;
+          height: 38px;
+        }
+
+        .get-info strong {
+          display: block;
+          color: #cfd4de;
+          font-size: 11px;
+        }
+
+        .get-info span {
+          display: block;
+          margin-top: 4px;
+          color: #626978;
+          font-size: 10px;
+        }
+
         .response-meta {
           display: flex;
           gap: 30px;
-          border-bottom:
-            1px solid #20232d;
+          border-bottom: 1px solid #20232d;
           padding-bottom: 15px;
           margin-bottom: 15px;
         }
@@ -782,7 +757,9 @@ export default function Docs() {
           margin: 0;
           padding: 18px;
           color: #c9ced8;
-          font-family: monospace;
+          font-family:
+            "JetBrains Mono",
+            monospace;
           font-size: 11px;
           line-height: 1.7;
           white-space: pre-wrap;
@@ -821,6 +798,20 @@ export default function Docs() {
           margin-bottom: 5px;
         }
 
+        .error-message {
+          margin-top: 12px;
+          padding: 12px;
+          border: 1px solid
+            rgba(255, 70, 90, .2);
+          background:
+            rgba(255, 70, 90, .06);
+          border-radius: 8px;
+          color: #ff7885;
+          font-family: monospace;
+          font-size: 10px;
+          word-break: break-word;
+        }
+
         .docs-footer {
           border-top: 1px solid #1c1f29;
           margin-top: 45px;
@@ -837,7 +828,7 @@ export default function Docs() {
             padding: 0 16px;
           }
 
-          .header-version {
+          .header-right code {
             display: none;
           }
 
@@ -850,8 +841,7 @@ export default function Docs() {
             top: 0;
             height: auto;
             border-right: 0;
-            border-bottom:
-              1px solid #1c1f29;
+            border-bottom: 1px solid #1c1f29;
             padding: 18px;
           }
 
@@ -886,493 +876,549 @@ export default function Docs() {
             flex-direction: column;
             gap: 8px;
           }
+
+          .url-bar {
+            flex-wrap: wrap;
+            padding: 10px 12px;
+          }
+
+          .url-bar code {
+            width: 100%;
+          }
+
+          .url-bar button {
+            margin-left: 0;
+          }
+
+          .get-info {
+            align-items: flex-start;
+          }
         }
 
       `}</style>
 
+      <div className="docs-page">
 
-      {/* HEADER */}
+        {/* HEADER */}
 
-      <header className="docs-header">
+        <header className="docs-header">
 
-        <div className="brand">
+          <div className="brand">
 
-          <div className="brand-logo">
-            W
-          </div>
+            <div className="brand-logo">
+              D
+            </div>
 
-          <div className="brand-text">
+            <div>
+              <strong>
+                DIN BOT API
+              </strong>
 
-            <strong>
-              DIN BOT
-            </strong>
-
-            <span>
-              API DOCUMENTATION
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="header-right">
-
-          <div className="api-live">
-            <span />
-            API ONLINE
-          </div>
-
-          <div className="header-version">
-            v1.0.0
-          </div>
-
-        </div>
-
-      </header>
-
-
-      <div className="docs-layout">
-
-        {/* SIDEBAR */}
-
-        <aside className="docs-sidebar">
-
-          <div className="sidebar-title">
-
-            <span>
-              DOCUMENTATION
-            </span>
-
-            <strong>
-              Endpoints
-            </strong>
+              <span>
+                API DOCUMENTATION
+              </span>
+            </div>
 
           </div>
 
+          <div className="header-right">
 
-          <div className="search-box">
+            <div className="api-live">
+              <span />
+              API ONLINE
+            </div>
 
-            <span>
-              ⌕
-            </span>
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
-              }
-              placeholder="Cari endpoint..."
-            />
+            <code>
+              v1.0.0
+            </code>
 
           </div>
 
+        </header>
 
-          <div className="endpoint-list">
 
-            {filteredEndpoints.map(
-              (endpoint) => (
+        <div className="docs-layout">
 
-                <button
-                  key={endpoint.id}
-                  className={
-                    selected.id ===
-                    endpoint.id
-                      ? "endpoint-item active"
-                      : "endpoint-item"
-                  }
-                  onClick={() =>
-                    selectEndpoint(
-                      endpoint
-                    )
-                  }
-                >
+          {/* SIDEBAR */}
 
-                  <MethodBadge
-                    method={
-                      endpoint.method
+          <aside className="docs-sidebar">
+
+            <div className="sidebar-title">
+
+              <span>
+                DOCUMENTATION
+              </span>
+
+              <strong>
+                Endpoints
+              </strong>
+
+            </div>
+
+
+            <div className="search-box">
+
+              <span>
+                ⌕
+              </span>
+
+              <input
+                type="text"
+                placeholder="Search endpoint..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
+
+            </div>
+
+
+            <div className="endpoint-list">
+
+              {filteredEndpoints.map(
+                (endpoint) => (
+
+                  <button
+                    key={endpoint.id}
+                    className={
+                      `endpoint-item ${
+                        selectedId === endpoint.id
+                          ? "active"
+                          : ""
+                      }`
                     }
-                  />
+                    onClick={() =>
+                      selectEndpoint(endpoint)
+                    }
+                  >
 
-                  <div className="endpoint-info">
+                    <span
+                      className={
+                        `method-badge ${
+                          endpoint.method.toLowerCase()
+                        }`
+                      }
+                    >
+                      {endpoint.method}
+                    </span>
 
-                    <strong>
-                      {endpoint.title}
-                    </strong>
+                    <div>
+
+                      <strong>
+                        {endpoint.name}
+                      </strong>
+
+                      <span>
+                        {endpoint.path}
+                      </span>
+
+                    </div>
+
+                  </button>
+
+                )
+              )}
+
+            </div>
+
+
+            <div className="sidebar-footer">
+
+              <span>
+                DIN BOT API
+              </span>
+
+              <small>
+                5 endpoints
+              </small>
+
+            </div>
+
+          </aside>
+
+
+          {/* MAIN */}
+
+          <main className="docs-main">
+
+            <section className="docs-intro">
+
+              <span className="eyebrow">
+                DIN BOT / API
+              </span>
+
+              <h1>
+                API Documentation
+              </h1>
+
+              <p>
+                Dokumentasi dan endpoint tester
+                untuk DIN BOT API. Semua endpoint
+                dapat dicoba langsung dari halaman
+                ini.
+              </p>
+
+            </section>
+
+
+            {selected && (
+
+              <section>
+
+                <div className="endpoint-header">
+
+                  <div className="endpoint-heading">
+
+                    <span
+                      className={
+                        `method-badge ${
+                          selected.method.toLowerCase()
+                        }`
+                      }
+                    >
+                      {selected.method}
+                    </span>
+
+                    <h2>
+                      {selected.name}
+                    </h2>
+
+                  </div>
+
+                  <p>
+                    {selected.description}
+                  </p>
+
+
+                  <div className="url-bar">
 
                     <span>
-                      {endpoint.path}
+                      {selected.method}
+                    </span>
+
+                    <code>
+                      {selected.path}
+                    </code>
+
+                    <button
+                      className="small-button"
+                      onClick={copyEndpoint}
+                    >
+                      Copy
+                    </button>
+
+                  </div>
+
+                </div>
+
+
+                {/* TESTER */}
+
+                <div className="tester-card">
+
+                  <div className="card-heading">
+
+                    <div>
+                      <span className="eyebrow">
+                        REQUEST
+                      </span>
+
+                      <h3>
+                        Endpoint Tester
+                      </h3>
+                    </div>
+
+                    <span className="request-method">
+                      {selected.method}
                     </span>
 
                   </div>
 
-                </button>
 
-              )
-            )}
-
-          </div>
-
-
-          <div className="sidebar-footer">
-
-            <span>
-              DIN BOT API
-            </span>
-
-            <small>
-              REST API
-            </small>
-
-          </div>
-
-        </aside>
-
-
-        {/* MAIN */}
-
-        <main className="docs-main">
-
-          <div className="docs-intro">
-
-            <span className="eyebrow">
-              DIN BOT / API
-            </span>
-
-            <h1>
-              API Documentation
-            </h1>
-
-            <p>
-              Dokumentasi API DIN BOT
-              untuk mengelola koneksi,
-              pairing, session dan
-              perangkat WhatsApp.
-            </p>
-
-          </div>
-
-
-          {/* ENDPOINT */}
-
-          <section className="endpoint-header">
-
-            <div className="endpoint-heading">
-
-              <MethodBadge
-                method={
-                  selected.method
-                }
-              />
-
-              <h2>
-                {selected.title}
-              </h2>
-
-            </div>
-
-            <p>
-              {selected.description}
-            </p>
-
-            <div className="url-bar">
-
-              <span>
-                {selected.method}
-              </span>
-
-              <code>
-                {getPath()}
-              </code>
-
-            </div>
-
-          </section>
-
-
-          {/* TESTER */}
-
-          <section className="tester-card">
-
-            <div className="card-heading">
-
-              <div>
-
-                <span className="eyebrow">
-                  API TESTER
-                </span>
-
-                <h3>
-                  Test Endpoint
-                </h3>
-
-              </div>
-
-              <MethodBadge
-                method={
-                  selected.method
-                }
-              />
-
-            </div>
-
-
-            {selected.id ===
-              "pairing" && (
-
-              <div className="form-group">
-
-                <label>
-                  SESSION ID
-                </label>
-
-                <input
-                  className="dark-input"
-                  value={
-                    sessionId
-                  }
-                  onChange={(e) =>
-                    setSessionId(
-                      e.target.value
-                    )
-                  }
-                  placeholder="6281234567890"
-                />
-
-              </div>
-
-            )}
-
-
-            {selected.method ===
-              "POST" && (
-
-              <div className="form-group">
-
-                <label>
-                  REQUEST BODY
-                </label>
-
-                <textarea
-                  className="code-input"
-                  value={body}
-                  onChange={(e) =>
-                    setBody(
-                      e.target.value
-                    )
-                  }
-                  spellCheck="false"
-                />
-
-              </div>
-
-            )}
-
-
-            <button
-              className="send-button"
-              onClick={
-                sendRequest
-              }
-              disabled={
-                loading
-              }
-            >
-
-              {loading ? (
-                <>
-                  <span className="loader" />
-                  Sending Request...
-                </>
-              ) : (
-                <>
-                  ▶ Send Request
-                </>
-              )}
-
-            </button>
-
-          </section>
-
-
-          {/* RESPONSE */}
-
-          <section className="response-card">
-
-            <div className="card-heading">
-
-              <div>
-
-                <span className="eyebrow">
-                  RESPONSE
-                </span>
-
-                <h3>
-                  Server Response
-                </h3>
-
-              </div>
-
-              {response !== null && (
-
-                <button
-                  className="copy-button"
-                  onClick={
-                    copyResponse
-                  }
-                >
-                  {copied
-                    ? "✓ Copied"
-                    : "Copy Response"}
-                </button>
-
-              )}
-
-            </div>
-
-
-            {response !== null && (
-
-              <div className="response-meta">
-
-                <div>
-
-                  <span>
-                    STATUS
-                  </span>
-
-                  <strong
-                    className={
-                      responseStatus >=
-                        200 &&
-                      responseStatus <
-                        300
-                        ? "status-success"
-                        : "status-error"
-                    }
+                  {selected.method === "POST" ? (
+
+                    <div className="form-group">
+
+                      <div className="label-row">
+
+                        <label>
+                          JSON BODY
+                        </label>
+
+                        <button
+                          className="small-button"
+                          onClick={() =>
+                            setRequestBody(
+                              JSON.stringify(
+                                selected.body,
+                                null,
+                                2
+                              )
+                            )
+                          }
+                        >
+                          Reset
+                        </button>
+
+                      </div>
+
+                      <textarea
+                        className="code-input"
+                        value={requestBody}
+                        onChange={(e) =>
+                          setRequestBody(
+                            e.target.value
+                          )
+                        }
+                        spellCheck="false"
+                      />
+
+                    </div>
+
+                  ) : (
+
+                    <div className="get-info">
+
+                      <div className="terminal-icon">
+                        GET
+                      </div>
+
+                      <div>
+                        <strong>
+                          No request body required
+                        </strong>
+
+                        <span>
+                          Endpoint ini dapat
+                          langsung dijalankan.
+                        </span>
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                  <button
+                    className="send-button"
+                    onClick={sendRequest}
+                    disabled={loading}
                   >
-                    {responseStatus === 0
-                      ? "ERROR"
-                      : responseStatus}
-                  </strong>
+
+                    {loading ? (
+                      <>
+                        <span className="loader" />
+                        Sending request...
+                      </>
+                    ) : (
+                      <>
+                        Send Request
+                        <span className="send-arrow">
+                          →
+                        </span>
+                      </>
+                    )}
+
+                  </button>
 
                 </div>
 
-                <div>
 
-                  <span>
-                    TIME
-                  </span>
+                {/* RESPONSE */}
 
-                  <strong>
-                    {responseTime} ms
-                  </strong>
+                <div className="response-card">
 
-                </div>
+                  <div className="card-heading">
 
-                <div>
+                    <div>
 
-                  <span>
-                    TYPE
-                  </span>
+                      <span className="eyebrow">
+                        RESPONSE
+                      </span>
 
-                  <strong>
-                    JSON
-                  </strong>
+                      <h3>
+                        Server Response
+                      </h3>
 
-                </div>
+                    </div>
 
-              </div>
+                    {responseData !== null && (
+                      <button
+                        className="copy-button"
+                        onClick={copyResponse}
+                      >
+                        Copy JSON
+                      </button>
+                    )}
 
-            )}
-
-
-            <div className="response-window">
-
-              {response === null ? (
-
-                <div className="empty-response">
-
-                  <div className="terminal-icon">
-                    {"</>"}
                   </div>
 
-                  <strong>
-                    Belum ada response
-                  </strong>
 
-                  <span>
-                    Pilih endpoint lalu
-                    klik Send Request.
-                  </span>
+                  {responseData !== null && (
+
+                    <div className="response-meta">
+
+                      <div>
+                        <span>
+                          STATUS
+                        </span>
+
+                        <strong
+                          className={
+                            responseStatus >= 200 &&
+                            responseStatus < 300
+                              ? "status-success"
+                              : "status-error"
+                          }
+                        >
+                          {responseStatus || "ERROR"}
+                        </strong>
+                      </div>
+
+
+                      <div>
+                        <span>
+                          TIME
+                        </span>
+
+                        <strong>
+                          {responseTime ?? "-"} ms
+                        </strong>
+                      </div>
+
+
+                      <div>
+                        <span>
+                          RESULT
+                        </span>
+
+                        <strong
+                          className={
+                            responseStatus >= 200 &&
+                            responseStatus < 300
+                              ? "status-success"
+                              : "status-error"
+                          }
+                        >
+                          {responseStatus >= 200 &&
+                          responseStatus < 300
+                            ? "SUCCESS"
+                            : "ERROR"}
+                        </strong>
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                  <div className="response-window">
+
+                    {responseData !== null ? (
+
+                      <pre>
+                        {JSON.stringify(
+                          responseData,
+                          null,
+                          2
+                        )}
+                      </pre>
+
+                    ) : (
+
+                      <div className="empty-response">
+
+                        <div className="terminal-icon">
+                          &gt;_
+                        </div>
+
+                        <strong>
+                          No response yet
+                        </strong>
+
+                        <span>
+                          Klik "Send Request"
+                          untuk mencoba endpoint.
+                        </span>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+
+                  {errorMessage && (
+
+                    <div className="error-message">
+                      {errorMessage}
+                    </div>
+
+                  )}
 
                 </div>
 
-              ) : (
 
-                <pre>
-                  {responseText}
-                </pre>
+                {/* EXAMPLE */}
 
-              )}
+                <div className="example-card">
 
-            </div>
+                  <div className="card-heading">
 
-          </section>
+                    <div>
 
+                      <span className="eyebrow">
+                        EXAMPLE
+                      </span>
 
-          {/* EXAMPLE */}
+                      <h3>
+                        Request
+                      </h3>
 
-          {selected.example && (
+                    </div>
 
-            <section className="example-card">
+                  </div>
 
-              <div className="card-heading">
-
-                <div>
-
-                  <span className="eyebrow">
-                    EXAMPLE
-                  </span>
-
-                  <h3>
-                    Example Response
-                  </h3>
+                  <pre>
+{selected.method} {selected.path}
+{
+  selected.method === "POST"
+    ? `\n\n${JSON.stringify(
+        selected.body,
+        null,
+        2
+      )}`
+    : ""
+}
+                  </pre>
 
                 </div>
 
-              </div>
+              </section>
 
-              <pre>
-                {JSON.stringify(
-                  selected.example,
-                  null,
-                  2
-                )}
-              </pre>
-
-            </section>
-
-          )}
+            )}
 
 
-          <footer className="docs-footer">
+            <footer className="docs-footer">
 
-            <span>
-              DIN BOT API
-            </span>
+              <span>
+                DIN BOT API • Documentation
+              </span>
 
-            <span>
-              WhatsApp Automation API
-            </span>
+              <span>
+                Built for WhatsApp Bot
+              </span>
 
-          </footer>
+            </footer>
 
-        </main>
+          </main>
+
+        </div>
 
       </div>
-
-    </div>
+    </>
   );
 }
+
+export default Docs;
