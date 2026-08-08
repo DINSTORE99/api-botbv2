@@ -70,13 +70,10 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 4000);
+  loadStatus();
+}, []);
 
-    return () => clearTimeout(timer);
-  }, []);
-
+   
    
   useEffect(() => {
     const audio = new Audio("/musik.mp3");
