@@ -230,21 +230,13 @@ if (window.location.pathname === "/doc") {
     }
   };
 
-  // =====================================================
+  /// =====================================================
   // AUTO UPDATE
   // =====================================================
 
   useEffect(() => {
-    loadStatus();
-
-    const timer = setInterval(() => {
-      loadStatus();
-    }, 5000);
-
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
+  loadStatus();
+}, []);
 
   // =====================================================
   // START PAIRING
@@ -600,14 +592,12 @@ if (window.location.pathname === "/doc") {
           </div>
 
           <button
-            className="refresh-button"
-            onClick={loadStatus}
-            disabled={loading}
-          >
-            {loading
-              ? "Memuat..."
-              : "↻ Refresh"}
-          </button>
+  className="refresh-button"
+  onClick={loadStatus}
+  disabled={loading}
+>
+  {loading ? "Memuat..." : "↻ Refresh"}
+</button>
 
         </header>
 
