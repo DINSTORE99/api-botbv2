@@ -1,1053 +1,1333 @@
-import React, { useMemo, useState } from "react";
+import { useState } from "react";
+import "./Docs.css";
 
-const API = "";
-
-const endpoints = [
+const ENDPOINTS = [
   {
     id: "status",
     method: "GET",
     path: "/api/status",
-    title: "Server Status",
-    group: "Monitoring",
-    description: "Mengambil status server dan daftar session.",
-    body: "",
-    example: `${window.location.origin}/api/status`,
+    title: "API Status",
+    description: "Mengecek status server dan service DIN BOT.",
+    body: null,
+    example: null,
+  },
+  {
+    id: "sessions",
+    method: "GET",
+    path: "/api/sessions",
+    title: "List Sessions",
+    description: "Mengambil daftar session WhatsApp yang terdaftar.",
+    body: null,
+    example: null,
   },
   {
     id: "pair",
     method: "POST",
     path: "/api/pair",
-    title: "Start Pairing",
-    group: "WhatsApp",
-    description: "Memulai proses pairing WhatsApp.",
-    body: JSON.stringify({ number: "6281234567890" }, null, 2),
+    title: "Pair WhatsApp",
+    description: "Memulai proses pairing perangkat WhatsApp.",
+    body: {
+      number: "6281234567890",
+    },
+    example: {
+      success: true,
+      sessionId: "6281234567890",
+      pairingCode: "ABCD1234",
+    },
   },
   {
     id: "pairing",
     method: "GET",
     path: "/api/pairing/{sessionId}",
     title: "Pairing Status",
-    group: "WhatsApp",
-    description: "Mengecek kode dan status koneksi pairing.",
-    body: "",
-    example: `${window.location.origin}/api/pairing/6281234567890`,
+    description: "Mengambil status dan kode pairing berdasarkan session ID.",
+    body: null,
+    example: {
+      success: true,
+      connected: false,
+      code: "ABCD1234",
+    },
   },
   {
     id: "logout",
     method: "POST",
     path: "/api/logout",
     title: "Logout Session",
-    group: "WhatsApp",
-    description: "Menghapus session WhatsApp.",
-    body: JSON.stringify({ sessionId: "6281234567890" }, null, 2),
+    description: "Menghapus atau logout session WhatsApp.",
+    body: {
+      sessionId: "6281234567890",
+    },
+    example: {
+      success: true,
+      message: "Session berhasil dihapus",
+    },
   },
 ];
 
-const methodColor = {
-  GET: "#67e8f9",
-  POST: "#a78bfa",
-};
+function MethodBadge({ method }) {
+  return (
+    <span className={`method-badge ${method.toLowerCase()}`}>
+      {method}
+    </span>
+  );
+}
 
 export default function Docs() {
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState("intro");
-  const [selectedId, setSelectedId] = useState("status");
-  const [sessionId, setSessionId] = useState("6281234567890");
-  const [requestBody, setRequestBody] = useState("");
-  const [responseText, setResponseText] = useState("");
-  const [status, setStatus] = useState("");
-  const [responseTime, setResponseTime] = useState("");
-  const [testing, setTesting] = useState(false);
+  const [selected, setSelected] = useState(ENDPOINTS[0]);
+  const [search, setSearch] = useState("");
+  const [sessionId, setSessionId] = useState("");
+  const [body, setBody] = useState("");
+  const [response, setResponse] = useState(null);
+  const [responseStatus, setResponseStatus] = useState(null);
+  const [responseTime, setResponseTime] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [mobileNav, setMobileNav] = useState(false);
 
-  const selected = endpoints.find((e) => e.id === selectedId) || endpoints[0];
+  const filteredEndpoints = ENDPOINTS.filter((item) => {
+    const text = `${item.method} ${item.path} ${item.title}`.toLowerCase();
+    return text.includes(search.toLowerCase());
+  });
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return endpoints;
-
-    return endpoints.filter((e) =>
-      [e.title, e.path, e.method, e.group, e.description]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [query]);
-
-  const selectEndpoint = (id) => {
-    const item = endpoints.find((e) => e.id === id);
-    if (!item) return;
-
-    setSelectedId(id);
-    setRequestBody(item.body || "");
-    setResponseText("");
-    setStatus("");
-    setResponseTime("");
+  const selectEndpoint = (endpoint) => {
+    setSelected(endpoint);
+    setResponse(null);
+    setResponseStatus(null);
+    setResponseTime(null);
     setCopied(false);
+
+    if (endpoint.body) {
+      setBody(JSON.stringify(endpoint.body, null, 2));
+    } else {
+      setBody("");
+    }
+
+    setSessionId("");
   };
 
-  const buildUrl = () => {
-    let path = selected.path;
+  const getPath = () => {
+    if (selected.id === "pairing") {
+      if (!sessionId.trim()) {
+        return selected.path.replace(
+          "{sessionId}",
+          "YOUR_SESSION_ID"
+        );
+      }
 
-    if (path.includes("{sessionId}")) {
-      path = path.replace(
+      return selected.path.replace(
         "{sessionId}",
         encodeURIComponent(sessionId.trim())
       );
     }
 
-    return `${window.location.origin}${path}`;
+    return selected.path;
   };
 
-  const testEndpoint = async () => {
-    setTesting(true);
-    setResponseText("");
-    setStatus("");
-    setResponseTime("");
-    setCopied(false);
-
-    const url = buildUrl();
-    const started = performance.now();
-
+  const sendRequest = async () => {
     try {
-      let body;
+      setLoading(true);
+      setResponse(null);
+      setResponseStatus(null);
+      setResponseTime(null);
+
+      let requestBody;
+
+      if (
+        selected.method === "POST" &&
+        body.trim()
+      ) {
+        try {
+          requestBody = JSON.parse(body);
+        } catch {
+          setResponse({
+            success: false,
+            error: "JSON request tidak valid.",
+          });
+
+          setLoading(false);
+          return;
+        }
+      }
+
+      const start = performance.now();
+
+      const options = {
+        method: selected.method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
 
       if (selected.method === "POST") {
-        if (!requestBody.trim()) {
-          throw new Error("Request body tidak boleh kosong.");
-        }
-
-        try {
-          body = JSON.stringify(JSON.parse(requestBody));
-        } catch {
-          throw new Error("JSON request body tidak valid.");
-        }
+        options.body = JSON.stringify(
+          requestBody || {}
+        );
       }
 
-      const response = await fetch(url, {
-        method: selected.method,
-        headers:
-          selected.method === "POST"
-            ? { "Content-Type": "application/json" }
-            : undefined,
-        body,
-        cache: "no-store",
-      });
+      const res = await fetch(
+        getPath(),
+        options
+      );
 
-      const elapsed = Math.round(performance.now() - started);
-      const contentType = response.headers.get("content-type") || "";
+      const end = performance.now();
 
-      let result;
+      setResponseStatus(res.status);
+      setResponseTime(
+        Math.round(end - start)
+      );
+
+      const contentType =
+        res.headers.get("content-type") || "";
 
       if (contentType.includes("application/json")) {
-        const json = await response.json();
-        result = JSON.stringify(json, null, 2);
+        const data = await res.json();
+        setResponse(data);
       } else {
-        result = await response.text();
+        const text = await res.text();
+        setResponse(text);
       }
-
-      setStatus(`${response.status} ${response.statusText}`);
-      setResponseTime(`${elapsed} ms`);
-      setResponseText(result || "(empty response)");
     } catch (error) {
-      const elapsed = Math.round(performance.now() - started);
+      setResponse({
+        success: false,
+        error: error.message,
+      });
 
-      setStatus("ERROR");
-      setResponseTime(`${elapsed} ms`);
-      setResponseText(
-        JSON.stringify(
-          {
-            error: error?.message || "Request gagal",
-          },
-          null,
-          2
-        )
-      );
+      setResponseStatus(0);
     } finally {
-      setTesting(false);
+      setLoading(false);
     }
   };
 
   const copyResponse = async () => {
-    if (!responseText) return;
+    if (response === null) return;
+
+    const text =
+      typeof response === "string"
+        ? response
+        : JSON.stringify(
+            response,
+            null,
+            2
+          );
 
     try {
-      await navigator.clipboard.writeText(responseText);
+      await navigator.clipboard.writeText(
+        text
+      );
+
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch {
+      setCopied(false);
+    }
   };
 
-  const scrollTo = (id) => {
-    setActive(id);
-    setMobileNav(false);
-
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
+  const responseText =
+    response === null
+      ? ""
+      : typeof response === "string"
+        ? response
+        : JSON.stringify(
+            response,
+            null,
+            2
+          );
 
   return (
     <div className="docs-page">
-      <style>{`
-        * {
-          box-sizing: border-box;
-        }
 
-        html {
-          scroll-behavior: smooth;
-        }
+      {/* HEADER */}
 
-        .docs-page {
-          min-height: 100vh;
-          color: #f8fafc;
-          background:
-            radial-gradient(circle at 10% 0%, rgba(124,58,237,.18), transparent 28%),
-            radial-gradient(circle at 90% 10%, rgba(6,182,212,.10), transparent 25%),
-            #070a12;
-          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        }
+      <header className="docs-header">
 
-        .docs-shell {
-          width: min(1280px, calc(100% - 40px));
-          margin: auto;
-          padding: 20px 0 70px;
-        }
+        <div className="brand">
 
-        .docs-topbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 15px;
-          padding: 8px 0 20px;
-          border-bottom: 1px solid rgba(148,163,184,.13);
-        }
-
-        .brand {
-          color: white;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-weight: 850;
-        }
-
-        .brand-logo {
-          width: 36px;
-          height: 36px;
-          display: grid;
-          place-items: center;
-          border-radius: 11px;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          box-shadow: 0 10px 30px rgba(124,58,237,.28);
-        }
-
-        .top-actions {
-          display: flex;
-          gap: 9px;
-          align-items: center;
-        }
-
-        .top-link,
-        .api-online {
-          border: 1px solid rgba(148,163,184,.13);
-          background: rgba(255,255,255,.025);
-          border-radius: 10px;
-          padding: 9px 12px;
-          color: #cbd5e1;
-          text-decoration: none;
-          font-size: 12px;
-        }
-
-        .api-online {
-          display: flex;
-          gap: 7px;
-          align-items: center;
-        }
-
-        .api-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #4ade80;
-          box-shadow: 0 0 12px #4ade80;
-        }
-
-        .docs-layout {
-          display: grid;
-          grid-template-columns: 245px minmax(0,1fr);
-          gap: 35px;
-          margin-top: 28px;
-        }
-
-        .sidebar {
-          position: sticky;
-          top: 20px;
-          height: calc(100vh - 40px);
-          overflow: auto;
-        }
-
-        .sidebar-box {
-          padding: 14px;
-          border-radius: 16px;
-          border: 1px solid rgba(148,163,184,.13);
-          background: rgba(12,17,28,.78);
-          backdrop-filter: blur(15px);
-        }
-
-        .nav-title {
-          color: #64748b;
-          font-size: 10px;
-          font-weight: 850;
-          letter-spacing: .13em;
-          margin: 4px 8px 9px;
-        }
-
-        .nav-btn {
-          width: 100%;
-          border: 0;
-          border-radius: 9px;
-          padding: 9px 10px;
-          text-align: left;
-          cursor: pointer;
-          background: transparent;
-          color: #94a3b8;
-          font-size: 12px;
-          margin-bottom: 2px;
-        }
-
-        .nav-btn.active {
-          background: rgba(167,139,250,.12);
-          color: #ddd6fe;
-        }
-
-        .hero {
-          padding: 30px 0;
-        }
-
-        .hero-grid {
-          display: grid;
-          grid-template-columns: 1.25fr .75fr;
-          gap: 18px;
-        }
-
-        .eyebrow {
-          color: #a78bfa;
-          font-size: 10px;
-          font-weight: 850;
-          letter-spacing: .14em;
-        }
-
-        .hero h1 {
-          font-size: clamp(38px,6vw,58px);
-          line-height: 1;
-          letter-spacing: -.045em;
-          margin: 13px 0;
-        }
-
-        .gradient-text {
-          background: linear-gradient(90deg,#c4b5fd,#67e8f9);
-          -webkit-background-clip: text;
-          color: transparent;
-        }
-
-        .muted {
-          color: #94a3b8;
-          line-height: 1.75;
-          font-size: 14px;
-        }
-
-        .panel {
-          border: 1px solid rgba(148,163,184,.13);
-          border-radius: 18px;
-          background: rgba(12,17,28,.76);
-        }
-
-        .base-panel {
-          padding: 20px;
-        }
-
-        .base-url {
-          color: #67e8f9;
-          font-size: 13px;
-          word-break: break-all;
-        }
-
-        .stats {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 22px;
-        }
-
-        .stat {
-          padding: 12px;
-          border-radius: 11px;
-          background: rgba(255,255,255,.035);
-          border: 1px solid rgba(148,163,184,.08);
-        }
-
-        .stat strong {
-          display: block;
-          font-size: 18px;
-        }
-
-        .stat span {
-          color: #64748b;
-          font-size: 10px;
-        }
-
-        .section {
-          border-top: 1px solid rgba(148,163,184,.13);
-          padding-top: 30px;
-          margin-top: 25px;
-          scroll-margin-top: 20px;
-        }
-
-        .section h2 {
-          margin: 7px 0;
-          font-size: 28px;
-        }
-
-        .endpoint-list {
-          display: grid;
-          gap: 10px;
-          margin-top: 18px;
-        }
-
-        .endpoint-row {
-          display: grid;
-          grid-template-columns: 60px 1fr auto;
-          gap: 12px;
-          align-items: center;
-          padding: 14px;
-          border: 1px solid rgba(148,163,184,.11);
-          border-radius: 13px;
-          background: rgba(255,255,255,.025);
-          cursor: pointer;
-          transition: .18s ease;
-        }
-
-        .endpoint-row:hover {
-          transform: translateY(-1px);
-          border-color: rgba(167,139,250,.35);
-          background: rgba(167,139,250,.06);
-        }
-
-        .method {
-          font-size: 10px;
-          font-weight: 900;
-          text-align: center;
-          padding: 5px 6px;
-          border-radius: 7px;
-        }
-
-        .endpoint-path {
-          color: #e2e8f0;
-          font-family: monospace;
-          font-size: 13px;
-          word-break: break-all;
-        }
-
-        .endpoint-name {
-          color: #64748b;
-          font-size: 11px;
-          text-align: right;
-        }
-
-        .tester {
-          margin-top: 20px;
-          padding: 20px;
-        }
-
-        .tester-head {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .tester-title {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          flex-wrap: wrap;
-        }
-
-        .tester-title h3 {
-          margin: 0;
-          font-size: 21px;
-        }
-
-        .method-badge {
-          padding: 5px 9px;
-          border-radius: 7px;
-          font-size: 10px;
-          font-weight: 900;
-        }
-
-        .url-box {
-          display: flex;
-          margin-top: 17px;
-          border: 1px solid rgba(148,163,184,.13);
-          border-radius: 11px;
-          overflow: hidden;
-          background: #070b13;
-        }
-
-        .url-method {
-          display: grid;
-          place-items: center;
-          padding: 0 13px;
-          font-size: 10px;
-          font-weight: 900;
-          border-right: 1px solid rgba(148,163,184,.13);
-        }
-
-        .url-input {
-          width: 100%;
-          border: 0;
-          outline: 0;
-          background: transparent;
-          color: #cbd5e1;
-          padding: 12px;
-          font-family: monospace;
-          font-size: 12px;
-        }
-
-        .session-input {
-          margin-top: 12px;
-          width: 100%;
-          border: 1px solid rgba(148,163,184,.13);
-          outline: 0;
-          background: #070b13;
-          color: #e2e8f0;
-          padding: 12px;
-          border-radius: 10px;
-          font-family: monospace;
-        }
-
-        .test-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-          margin-top: 15px;
-        }
-
-        .code-label {
-          color: #64748b;
-          font-size: 10px;
-          font-weight: 850;
-          letter-spacing: .12em;
-          margin-bottom: 8px;
-        }
-
-        .code-area {
-          width: 100%;
-          min-height: 190px;
-          resize: vertical;
-          border: 1px solid rgba(148,163,184,.13);
-          outline: 0;
-          border-radius: 12px;
-          background: #070b13;
-          color: #dbeafe;
-          padding: 14px;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 12px;
-          line-height: 1.65;
-        }
-
-        .response-wrap {
-          position: relative;
-        }
-
-        .response-area {
-          min-height: 190px;
-          max-height: 400px;
-          overflow: auto;
-          margin: 0;
-          padding: 14px;
-          border: 1px solid rgba(148,163,184,.13);
-          border-radius: 12px;
-          background: #070b13;
-          color: #dbeafe;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 12px;
-          line-height: 1.65;
-          white-space: pre-wrap;
-          word-break: break-word;
-        }
-
-        .tester-actions {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          margin-top: 14px;
-          flex-wrap: wrap;
-        }
-
-        .send-btn,
-        .copy-btn {
-          border: 0;
-          border-radius: 10px;
-          padding: 11px 15px;
-          cursor: pointer;
-          font-weight: 800;
-          font-size: 12px;
-        }
-
-        .send-btn {
-          color: white;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          box-shadow: 0 10px 25px rgba(124,58,237,.18);
-        }
-
-        .send-btn:disabled {
-          opacity: .55;
-          cursor: wait;
-        }
-
-        .copy-btn {
-          color: #cbd5e1;
-          background: rgba(255,255,255,.06);
-          border: 1px solid rgba(148,163,184,.13);
-        }
-
-        .response-meta {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          color: #64748b;
-          font-size: 11px;
-        }
-
-        .mobile-nav {
-          display: none;
-          margin-top: 15px;
-        }
-
-        @media (max-width: 900px) {
-          .docs-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .sidebar {
-            display: none;
-          }
-
-          .mobile-nav {
-            display: block;
-          }
-
-          .hero-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        @media (max-width: 650px) {
-          .docs-shell {
-            width: min(100% - 28px, 1280px);
-          }
-
-          .test-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .endpoint-row {
-            grid-template-columns: 55px 1fr;
-          }
-
-          .endpoint-name {
-            display: none;
-          }
-
-          .api-online {
-            display: none;
-          }
-        }
-      `}</style>
-
-      <div className="docs-shell">
-        <header className="docs-topbar">
-          <a className="brand" href="/">
-            <span className="brand-logo">W</span>
-            <span>
-              DIN BOT
-              <small
-                style={{
-                  display: "block",
-                  color: "#64748b",
-                  fontSize: 9,
-                  letterSpacing: ".13em",
-                }}
-              >
-                API DOCUMENTATION
-              </small>
-            </span>
-          </a>
-
-          <div className="top-actions">
-            <div className="api-online">
-              <span className="api-dot" />
-              API ONLINE
-            </div>
-
-            <a className="top-link" href="/">
-              Dashboard →
-            </a>
+          <div className="brand-logo">
+            W
           </div>
-        </header>
 
-        <div className="mobile-nav">
-          <button
-            className="top-link"
-            style={{ width: "100%", cursor: "pointer" }}
-            onClick={() => setMobileNav((v) => !v)}
-          >
-            ☰ Documentation Menu
-          </button>
+          <div>
+            <strong>
+              DIN BOT
+            </strong>
 
-          {mobileNav && (
-            <div className="panel" style={{ marginTop: 8, padding: 10 }}>
-              <button className="nav-btn" onClick={() => scrollTo("intro")}>
-                Introduction
-              </button>
-              <button className="nav-btn" onClick={() => scrollTo("endpoints")}>
-                API Endpoints
-              </button>
-              <button className="nav-btn" onClick={() => scrollTo("tester")}>
-                Endpoint Tester
-              </button>
-            </div>
-          )}
+            <span>
+              API DOCUMENTATION
+            </span>
+          </div>
+
         </div>
 
-        <div className="docs-layout">
-          <aside className="sidebar">
-            <div className="sidebar-box">
-              <div className="nav-title">CONTENTS</div>
+        <div className="header-right">
 
-              <button
-                className={`nav-btn ${active === "intro" ? "active" : ""}`}
-                onClick={() => scrollTo("intro")}
-              >
-                Introduction
-              </button>
+          <div className="api-live">
+            <span />
+            API ONLINE
+          </div>
 
-              <button
-                className={`nav-btn ${active === "endpoints" ? "active" : ""}`}
-                onClick={() => scrollTo("endpoints")}
-              >
-                API Endpoints
-              </button>
+          <code>
+            v1.0.0
+          </code>
 
-              <button
-                className={`nav-btn ${active === "tester" ? "active" : ""}`}
-                onClick={() => scrollTo("tester")}
-              >
-                Endpoint Tester
-              </button>
+        </div>
 
-              <div className="nav-title" style={{ marginTop: 18 }}>
-                API
-              </div>
+      </header>
 
-              {endpoints.map((item) => (
+
+      <div className="docs-layout">
+
+        {/* SIDEBAR */}
+
+        <aside className="docs-sidebar">
+
+          <div className="sidebar-title">
+            <span>
+              DOCUMENTATION
+            </span>
+
+            <strong>
+              Endpoints
+            </strong>
+          </div>
+
+          <div className="search-box">
+
+            <span>
+              ⌕
+            </span>
+
+            <input
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Cari endpoint..."
+            />
+
+          </div>
+
+
+          <div className="endpoint-list">
+
+            {filteredEndpoints.map(
+              (endpoint) => (
+
                 <button
-                  key={item.id}
-                  className="nav-btn"
-                  onClick={() => {
-                    selectEndpoint(item.id);
-                    scrollTo("tester");
-                  }}
+                  key={endpoint.id}
+                  className={
+                    selected.id === endpoint.id
+                      ? "endpoint-item active"
+                      : "endpoint-item"
+                  }
+                  onClick={() =>
+                    selectEndpoint(endpoint)
+                  }
                 >
-                  <span
-                    style={{
-                      color: methodColor[item.method],
-                      fontSize: 9,
-                      fontWeight: 900,
-                      marginRight: 6,
-                    }}
-                  >
-                    {item.method}
-                  </span>
-                  {item.path}
+
+                  <MethodBadge
+                    method={endpoint.method}
+                  />
+
+                  <div>
+                    <strong>
+                      {endpoint.title}
+                    </strong>
+
+                    <span>
+                      {endpoint.path}
+                    </span>
+                  </div>
+
                 </button>
-              ))}
-            </div>
-          </aside>
 
-          <main>
-            <section id="intro" className="hero">
-              <div className="hero-grid">
-                <div>
-                  <span className="eyebrow">DIN BOT · API V1</span>
+              )
+            )}
 
-                  <h1>
-                    Test your
-                    <br />
-                    <span className="gradient-text">API endpoints.</span>
-                  </h1>
+          </div>
 
-                  <p className="muted" style={{ maxWidth: 680 }}>
-                    Dokumentasi API lengkap dengan Endpoint Tester. Pilih
-                    endpoint, ubah request body jika diperlukan, lalu kirim
-                    request langsung dari halaman ini.
-                  </p>
-                </div>
 
-                <div className="panel base-panel">
-                  <div
-                    style={{
-                      color: "#64748b",
-                      fontSize: 10,
-                      fontWeight: 850,
-                      letterSpacing: ".12em",
-                      marginBottom: 9,
-                    }}
-                  >
-                    BASE URL
-                  </div>
+          <div className="sidebar-footer">
 
-                  <div className="base-url">
-                    {window.location.origin}
-                  </div>
+            <span>
+              DIN BOT API
+            </span>
 
-                  <div className="stats">
-                    <div className="stat">
-                      <strong>4</strong>
-                      <span>ENDPOINTS</span>
-                    </div>
-                    <div className="stat">
-                      <strong>GET/POST</strong>
-                      <span>METHODS</span>
-                    </div>
-                    <div className="stat">
-                      <strong>JSON</strong>
-                      <span>FORMAT</span>
-                    </div>
-                    <div className="stat">
-                      <strong>LIVE</strong>
-                      <span>TESTER</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <small>
+              REST API
+            </small>
 
-            <section id="endpoints" className="section">
-              <span className="eyebrow">API REFERENCE</span>
-              <h2>Endpoints</h2>
-              <p className="muted">
-                Pilih endpoint untuk langsung membukanya di Endpoint Tester.
-              </p>
+          </div>
 
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cari endpoint..."
-                style={{
-                  width: "100%",
-                  marginTop: 8,
-                  padding: 12,
-                  borderRadius: 10,
-                  border: "1px solid rgba(148,163,184,.13)",
-                  background: "#0c111c",
-                  color: "#f8fafc",
-                  outline: 0,
-                }}
+        </aside>
+
+
+        {/* MAIN */}
+
+        <main className="docs-main">
+
+          <div className="docs-intro">
+
+            <span className="eyebrow">
+              DIN BOT / API
+            </span>
+
+            <h1>
+              API Documentation
+            </h1>
+
+            <p>
+              Dokumentasi lengkap API DIN BOT
+              untuk mengelola koneksi dan
+              session WhatsApp.
+            </p>
+
+          </div>
+
+
+          {/* ENDPOINT TITLE */}
+
+          <section className="endpoint-header">
+
+            <div className="endpoint-heading">
+
+              <MethodBadge
+                method={selected.method}
               />
 
-              <div className="endpoint-list">
-                {filtered.map((item) => (
-                  <div
-                    className="endpoint-row"
-                    key={item.id}
+              <h2>
+                {selected.title}
+              </h2>
+
+            </div>
+
+            <p>
+              {selected.description}
+            </p>
+
+            <div className="url-bar">
+
+              <span>
+                {selected.method}
+              </span>
+
+              <code>
+                {getPath()}
+              </code>
+
+            </div>
+
+          </section>
+
+
+          {/* TESTER */}
+
+          <section className="tester-card">
+
+            <div className="card-heading">
+
+              <div>
+
+                <span className="eyebrow">
+                  API TESTER
+                </span>
+
+                <h3>
+                  Test Endpoint
+                </h3>
+
+              </div>
+
+              <div className="request-method">
+                <MethodBadge
+                  method={selected.method}
+                />
+              </div>
+
+            </div>
+
+
+            {/* SESSION ID */}
+
+            {selected.id === "pairing" && (
+
+              <div className="form-group">
+
+                <label>
+                  SESSION ID
+                </label>
+
+                <input
+                  className="dark-input"
+                  value={sessionId}
+                  onChange={(e) =>
+                    setSessionId(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Masukkan session ID"
+                />
+
+              </div>
+
+            )}
+
+
+            {/* JSON BODY */}
+
+            {selected.method === "POST" && (
+
+              <div className="form-group">
+
+                <div className="label-row">
+
+                  <label>
+                    REQUEST BODY
+                  </label>
+
+                  <button
+                    className="small-button"
                     onClick={() => {
-                      selectEndpoint(item.id);
-                      scrollTo("tester");
+                      setBody(
+                        JSON.stringify(
+                          selected.body || {},
+                          null,
+                          2
+                        )
+                      );
                     }}
                   >
-                    <span
-                      className="method"
-                      style={{
-                        color: methodColor[item.method],
-                        background: `${methodColor[item.method]}16`,
-                      }}
-                    >
-                      {item.method}
-                    </span>
+                    Format JSON
+                  </button>
 
-                    <span className="endpoint-path">
-                      {item.path}
-                    </span>
+                </div>
 
-                    <span className="endpoint-name">
-                      {item.title}
-                    </span>
-                  </div>
-                ))}
+                <textarea
+                  className="code-input"
+                  value={body}
+                  onChange={(e) =>
+                    setBody(
+                      e.target.value
+                    )
+                  }
+                  spellCheck="false"
+                />
+
               </div>
-            </section>
 
-            <section id="tester" className="section">
-              <span className="eyebrow">LIVE TOOL</span>
-              <h2>Endpoint Tester</h2>
-              <p className="muted">
-                Request dikirim dari browser kamu langsung ke endpoint API.
-              </p>
+            )}
 
-              <div className="panel tester">
-                <div className="tester-head">
-                  <div>
-                    <div className="tester-title">
-                      <span
-                        className="method-badge"
-                        style={{
-                          color: methodColor[selected.method],
-                          background: `${methodColor[selected.method]}16`,
-                        }}
-                      >
-                        {selected.method}
-                      </span>
 
-                      <h3>{selected.title}</h3>
-                    </div>
-
-                    <p
-                      className="muted"
-                      style={{
-                        margin: "8px 0 0",
-                        fontSize: 12,
-                      }}
-                    >
-                      {selected.description}
-                    </p>
-                  </div>
-
-                  <select
-                    value={selectedId}
-                    onChange={(e) => selectEndpoint(e.target.value)}
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 9,
-                      border: "1px solid rgba(148,163,184,.13)",
-                      background: "#070b13",
-                      color: "#cbd5e1",
-                      outline: 0,
-                    }}
-                  >
-                    {endpoints.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.method} · {item.path}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="url-box">
-                  <div
-                    className="url-method"
-                    style={{ color: methodColor[selected.method] }}
-                  >
-                    {selected.method}
-                  </div>
-
-                  <input
-                    className="url-input"
-                    value={buildUrl()}
-                    readOnly
-                  />
-                </div>
-
-                {selected.path.includes("{sessionId}") && (
-                  <input
-                    className="session-input"
-                    value={sessionId}
-                    onChange={(e) => setSessionId(e.target.value)}
-                    placeholder="Masukkan sessionId..."
-                  />
-                )}
-
-                <div className="test-grid">
-                  <div>
-                    <div className="code-label">
-                      REQUEST BODY
-                    </div>
-
-                    {selected.method === "POST" ? (
-                      <textarea
-                        className="code-area"
-                        value={requestBody}
-                        onChange={(e) => setRequestBody(e.target.value)}
-                        spellCheck={false}
-                      />
-                    ) : (
-                      <div className="code-area" style={{ color: "#64748b" }}>
-                        Endpoint GET tidak membutuhkan request body.
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="code-label">
-                      RESPONSE
-                    </div>
-
-                    <div className="response-wrap">
-                      <pre className="response-area">
-                        {responseText || "Belum ada response.\n\nKlik Send Request untuk mencoba endpoint."}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="tester-actions">
-                  <div className="response-meta">
-                    {status && <span>{status}</span>}
-                    {responseTime && <span>· {responseTime}</span>}
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="copy-btn"
-                      onClick={copyResponse}
-                      disabled={!responseText}
-                    >
-                      {copied ? "Copied ✓" : "Copy Response"}
-                    </button>
-
-                    <button
-                      className="send-btn"
-                      onClick={testEndpoint}
-                      disabled={testing}
-                    >
-                      {testing ? "Sending..." : "▶ Send Request"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <footer
-              style={{
-                borderTop: "1px solid rgba(148,163,184,.13)",
-                marginTop: 35,
-                paddingTop: 25,
-                textAlign: "center",
-                color: "#64748b",
-                fontSize: 11,
-              }}
+            <button
+              className="send-button"
+              onClick={sendRequest}
+              disabled={loading}
             >
-              DIN BOT · API Documentation · Endpoint Tester
-            </footer>
-          </main>
-        </div>
+
+              {loading ? (
+                <>
+                  <span className="loader" />
+                  Sending Request...
+                </>
+              ) : (
+                <>
+                  ▶ Send Request
+                </>
+              )}
+
+            </button>
+
+          </section>
+
+
+          {/* RESPONSE */}
+
+          <section className="response-card">
+
+            <div className="card-heading">
+
+              <div>
+
+                <span className="eyebrow">
+                  RESPONSE
+                </span>
+
+                <h3>
+                  Server Response
+                </h3>
+
+              </div>
+
+              {response !== null && (
+
+                <button
+                  className="copy-button"
+                  onClick={copyResponse}
+                >
+                  {copied
+                    ? "✓ Copied"
+                    : "Copy Response"}
+                </button>
+
+              )}
+
+            </div>
+
+
+            {response !== null && (
+
+              <div className="response-meta">
+
+                <div>
+
+                  <span>
+                    STATUS
+                  </span>
+
+                  <strong
+                    className={
+                      responseStatus >= 200 &&
+                      responseStatus < 300
+                        ? "status-success"
+                        : "status-error"
+                    }
+                  >
+                    {responseStatus === 0
+                      ? "ERROR"
+                      : responseStatus}
+                  </strong>
+
+                </div>
+
+                <div>
+
+                  <span>
+                    TIME
+                  </span>
+
+                  <strong>
+                    {responseTime} ms
+                  </strong>
+
+                </div>
+
+                <div>
+
+                  <span>
+                    TYPE
+                  </span>
+
+                  <strong>
+                    JSON
+                  </strong>
+
+                </div>
+
+              </div>
+
+            )}
+
+
+            <div className="response-window">
+
+              {response === null ? (
+
+                <div className="empty-response">
+
+                  <div className="terminal-icon">
+                    {"</>"}
+                  </div>
+
+                  <strong>
+                    Belum ada response
+                  </strong>
+
+                  <span>
+                    Pilih endpoint lalu
+                    klik Send Request.
+                  </span>
+
+                </div>
+
+              ) : (
+
+                <pre>
+                  {responseText}
+                </pre>
+
+              )}
+
+            </div>
+
+          </section>
+
+
+          {/* EXAMPLE */}
+
+          {selected.example && (
+
+            <section className="example-card">
+
+              <div className="card-heading">
+
+                <div>
+
+                  <span className="eyebrow">
+                    EXAMPLE
+                  </span>
+
+                  <h3>
+                    Example Response
+                  </h3>
+
+                </div>
+
+              </div>
+
+              <pre>
+                {JSON.stringify(
+                  selected.example,
+                  null,
+                  2
+                )}
+              </pre>
+
+            </section>
+
+          )}
+
+
+          <footer className="docs-footer">
+            <span>
+              DIN BOT API
+            </span>
+
+            <span>
+              Built for WhatsApp automation
+            </span>
+          </footer>
+
+        </main>
+
       </div>
+
     </div>
   );
 }
+
+"Docs.css"
+
+Buat file:
+
+src/doc/Docs.css
+
+lalu isi:
+
+* {
+  box-sizing: border-box;
+}
+
+.docs-page {
+  min-height: 100vh;
+  background: #08090d;
+  color: #f5f7fb;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.docs-header {
+  height: 72px;
+  border-bottom: 1px solid #1c1f29;
+  background: rgba(8, 9, 13, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    135deg,
+    #7c3aed,
+    #4f46e5
+  );
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.brand div:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand strong {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.brand span {
+  color: #717887;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.api-live {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8ee6ae;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.api-live span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #36d778;
+  box-shadow: 0 0 12px #36d778;
+}
+
+.header-right code {
+  color: #7d8494;
+  font-size: 11px;
+}
+
+.docs-layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  min-height: calc(100vh - 72px);
+}
+
+.docs-sidebar {
+  border-right: 1px solid #1c1f29;
+  background: #0b0d12;
+  padding: 28px 18px;
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  padding: 0 10px 18px;
+}
+
+.sidebar-title span,
+.eyebrow {
+  color: #737b8d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.sidebar-title strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 5px;
+}
+
+.search-box {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #20232e;
+  background: #101219;
+  border-radius: 10px;
+  padding: 0 12px;
+  margin-bottom: 18px;
+}
+
+.search-box span {
+  color: #737b8d;
+}
+
+.search-box input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+  font-size: 12px;
+}
+
+.endpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow-y: auto;
+}
+
+.endpoint-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #aeb4c1;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.endpoint-item:hover {
+  background: #12151c;
+  color: white;
+}
+
+.endpoint-item.active {
+  background: #151823;
+  border-color: #292d3a;
+  color: white;
+}
+
+.endpoint-item > div:last-child {
+  min-width: 0;
+}
+
+.endpoint-item strong {
+  display: block;
+  font-size: 11px;
+}
+
+.endpoint-item span:last-child {
+  display: block;
+  margin-top: 3px;
+  color: #646b7b;
+  font-family: monospace;
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.method-badge {
+  min-width: 45px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+
+.method-badge.get {
+  color: #69a9ff;
+  background: rgba(59, 130, 246, .12);
+}
+
+.method-badge.post {
+  color: #64e49b;
+  background: rgba(34, 197, 94, .12);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 18px 10px 0;
+  border-top: 1px solid #1c1f29;
+  display: flex;
+  justify-content: space-between;
+  color: #777e8d;
+  font-size: 10px;
+}
+
+.sidebar-footer small {
+  color: #4f5562;
+}
+
+.docs-main {
+  width: 100%;
+  max-width: 1050px;
+  padding: 55px 55px 30px;
+}
+
+.docs-intro {
+  margin-bottom: 48px;
+}
+
+.docs-intro h1 {
+  font-size: clamp(32px, 5vw, 50px);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin: 12px 0;
+}
+
+.docs-intro p {
+  color: #8d94a3;
+  max-width: 620px;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.endpoint-header {
+  margin-bottom: 28px;
+}
+
+.endpoint-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.endpoint-heading h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.endpoint-header p {
+  color: #858c9c;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 10px 0 16px;
+}
+
+.url-bar {
+  min-height: 48px;
+  border: 1px solid #242834;
+  background: #0d1016;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+}
+
+.url-bar span {
+  color: #62dd99;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.url-bar code {
+  color: #d5dae3;
+  font-size: 12px;
+  overflow-x: auto;
+}
+
+.tester-card,
+.response-card,
+.example-card {
+  border: 1px solid #20232d;
+  background: #0d1016;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.card-heading h3 {
+  margin: 5px 0 0;
+  font-size: 17px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  color: #7e8696;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  margin-bottom: 8px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dark-input,
+.code-input {
+  width: 100%;
+  outline: none;
+  border: 1px solid #242834;
+  background: #080a0f;
+  color: #e7eaf0;
+  border-radius: 9px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.dark-input:focus,
+.code-input:focus {
+  border-color: #5b4acb;
+}
+
+.code-input {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.small-button,
+.copy-button {
+  border: 1px solid #292d39;
+  background: #141720;
+  color: #aab0bd;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.small-button:hover,
+.copy-button:hover {
+  color: white;
+  background: #1a1d27;
+}
+
+.send-button {
+  width: 100%;
+  height: 46px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(
+    135deg,
+    #6949e8,
+    #4f46c8
+  );
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(79, 70, 229, .2);
+}
+
+.send-button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.loader {
+  width: 13px;
+  height: 13px;
+  display: inline-block;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin-right: 7px;
+  vertical-align: -2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.response-meta {
+  display: flex;
+  gap: 30px;
+  border-bottom: 1px solid #20232d;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.response-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.response-meta span {
+  color: #686f7e;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.response-meta strong {
+  font-size: 11px;
+}
+
+.status-success {
+  color: #64e49b;
+}
+
+.status-error {
+  color: #ff6b7a;
+}
+
+.response-window {
+  min-height: 250px;
+  max-height: 500px;
+  overflow: auto;
+  background: #07090d;
+  border: 1px solid #191c24;
+  border-radius: 9px;
+}
+
+.response-window pre,
+.example-card pre {
+  margin: 0;
+  padding: 18px;
+  color: #c9ced8;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.empty-response {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  color: #5e6574;
+}
+
+.empty-response strong {
+  color: #858c9b;
+  font-size: 12px;
+}
+
+.empty-response span {
+  font-size: 10px;
+}
+
+.terminal-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #11141c;
+  color: #6d5ce7;
+  font-family: monospace;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.docs-footer {
+  border-top: 1px solid #1c1f29;
+  margin-top: 45px;
+  padding: 22px 0;
+  display: flex;
+  justify-content: space-between;
+  color: #555c6b;
+  font-size: 9px;
+}
+
+@media (max-width: 800px) {
+
+  .docs-header {
+    padding: 0 16px;
+  }
+
+  .header-right code {
+    display: none;
+  }
+
+  .docs-layout {
+    display: block;
+  }
+
+  .docs-sidebar {
+    position: relative;
+    top: 0;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #1c1f29;
+    padding: 18px;
+  }
+
+  .endpoint-list {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .docs-main {
+    padding: 35px 16px;
+  }
+
+  .docs-intro {
+    margin-bottom: 35px;
+  }
+
+  .docs-intro h1 {
+    letter-spacing: -1px;
+  }
+
+  .endpoint-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .response-meta {
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .docs-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+Pastikan import-nya di "Docs.jsx":
+
+import "./Docs.css";
+
+Dan di "App.jsx" tetap:
+
+import Docs from "./doc/Docs";
+
+Kalau routing kamu sekarang menggunakan:
+
+{page === "doc" && <Docs />}
+
+maka halaman dokumentasi ini langsung bisa dipakai di "/doc" sesuai routing yang sudah kamu buat.
