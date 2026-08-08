@@ -604,6 +604,7 @@ function App() {
           >
             {loading ? "Memuat..." : "↻ Refresh"}
           </button>
+           </header>
 
           {/* STATS */}
 
