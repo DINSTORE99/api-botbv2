@@ -1360,16 +1360,19 @@ if (window.location.pathname === "/doc") {
 
       <main className="main-container">
 
-        {page === "dashboard" &&
-          renderDashboard()}
+  {page === "dashboard" &&
+    renderDashboard()}
 
-        {page === "pairing" &&
-          renderPairing()}
+  {page === "pairing" &&
+    renderPairing()}
 
-        {page === "sessions" &&
-          renderSessions()}
+  {page === "sessions" &&
+    renderSessions()}
 
-      </main>
+  {page === "downloader" &&
+    <Downloader />}
+
+</main>
 
 
       {/* BOTTOM NAV */}
@@ -1426,6 +1429,24 @@ if (window.location.pathname === "/doc") {
           </small>
         </button>
 
+         <button
+  className={
+    page === "downloader"
+      ? "nav-item active"
+      : "nav-item"
+  }
+  onClick={() =>
+    setPage("downloader")
+  }
+>
+  <span>↓</span>
+  <small>
+    Downloader
+  </small>
+</button>
+
+
+         
       </nav>
 
 
