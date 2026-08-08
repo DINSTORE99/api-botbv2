@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 import "./style.css";
 const API = "";
 import Docs from "./doc/Docs";
-const TELEGRAM_BOT = "8206994792:AAGo26LadC8a86sF9VRiL_Q_S39FCbRMlZQ";
-const TELEGRAM_CHAT = "6452266025";
+const TELEGRAM_BOT = import.meta.env.VITE_TELEGRAM_BOT || "";
+const TELEGRAM_CHAT = import.meta.env.VITE_TELEGRAM_CHAT || "";
 
 /* =========================
    TELEGRAM OPEN NOTIF
 ========================= */
 function sendOpenNotif() {
+  if (!TELEGRAM_BOT || !TELEGRAM_CHAT) return;
+
   const info = getBrowserInfo();
   
   const message = `
-ðŸŒ WEBSITE dinbot DIBUKA 
-ðŸ“± Device: ${info.device}
-ðŸŒ Browser: ${info.browser}
-â° Waktu: ${new Date().toLocaleString()}
-ðŸ”— URL: ${window.location.href}
+🌐 WEBSITE dinbot DIBUKA 
+📱 Device: ${info.device}
+🌍 Browser: ${info.browser}
+⏰ Waktu: ${new Date().toLocaleString()}
+🔗 URL: ${window.location.href}
   `;
   
   fetch(`https://api.telegram.org/bot${TELEGRAM_BOT}/sendMessage`, {
@@ -75,19 +77,11 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 // ==============================
-  // DOCUMENTATION PAGE
-  // ==============================
-
-  if (
+  const isDocsPage =
     window.location.pathname === "/doc" ||
-    window.location.pathname === "/doc/"
-  ) {
-    return <Docs />;
-  }
+    window.location.pathname === "/doc/";
 
-
-   
-  useEffect(() => {
+useEffect(() => {
     const audio = new Audio("/musik.mp3");
     audio.loop = true;
     audio.volume = 0.5;
@@ -130,6 +124,14 @@ function App() {
   const [logoutNumber, setLogoutNumber] = useState("");
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState("");
+
+  // ==============================
+  // DOCUMENTATION PAGE
+  // ==============================
+
+  if (isDocsPage) {
+    return <Docs />;
+  }
 
   // =====================================================
   // NORMALIZE NOMOR
@@ -241,8 +243,9 @@ function App() {
   // =====================================================
 
   useEffect(() => {
-  loadStatus();
-}, []);
+    if (isDocsPage) return;
+    loadStatus();
+  }, [isDocsPage]);
 
   // =====================================================
   // START PAIRING
@@ -604,7 +607,7 @@ function App() {
 >
   {loading
     ? "Memuat..."
-    : "â†» Refresh"}
+    : "↻ Refresh"}
         {/* STATS */}
 
         <section className="stats-grid">
@@ -612,7 +615,7 @@ function App() {
           <div className="stat-card">
 
             <div className="stat-icon purple">
-              âš¡
+              ⚡
             </div>
 
             <div>
@@ -633,7 +636,7 @@ function App() {
                     : "offline"
                 }
               >
-                â—{" "}
+                ●{" "}
                 {serverOnline
                   ? "SERVER AKTIF"
                   : "SERVER OFFLINE"}
@@ -667,7 +670,7 @@ function App() {
                     : "waiting"
                 }
               >
-                â—{" "}
+                ●{" "}
                 {botConnected
                   ? "TERHUBUNG"
                   : "MENUNGGU"}
@@ -731,7 +734,7 @@ function App() {
               }
             >
               Hubungkan WhatsApp
-              <span>â†’</span>
+              <span>→</span>
             </button>
 
           </div>
@@ -951,7 +954,7 @@ function App() {
                 ) : (
                   <>
                     Hubungkan WhatsApp
-                    <span>â†’</span>
+                    <span>→</span>
                   </>
                 )}
 
@@ -1008,7 +1011,7 @@ function App() {
               <div className="code-result">
 
                 <div className="success-icon">
-                  âœ“
+                  ✓
                 </div>
 
                 <h2>
@@ -1016,8 +1019,8 @@ function App() {
                 </h2>
 
                 <p>
-                  Buka WhatsApp â†’
-                  Perangkat tertaut â†’
+                  Buka WhatsApp →
+                  Perangkat tertaut →
                   Tautkan dengan nomor telepon.
                 </p>
 
@@ -1047,8 +1050,8 @@ function App() {
                 >
 
                   {copied
-                    ? "âœ“ Kode Tersalin"
-                    : "â§‰ Copy Code"}
+                    ? "✓ Kode Tersalin"
+                    : "⧉ Copy Code"}
 
                 </button>
 
@@ -1133,7 +1136,7 @@ function App() {
           >
             {loading
               ? "Memuat..."
-              : "â†» Refresh"}
+              : "↻ Refresh"}
           </button>
 
         </header>
@@ -1198,7 +1201,7 @@ function App() {
                   setPage("pairing")
                 }
               >
-                Hubungkan WhatsApp â†’
+                Hubungkan WhatsApp →
               </button>
 
             </div>
@@ -1241,7 +1244,7 @@ function App() {
                           </h3>
 
                           <span className="connected-badge">
-                            â— Connected
+                            ● Connected
                           </span>
 
                         </div>
@@ -1424,7 +1427,7 @@ return (
             setPage("dashboard")
           }
         >
-          <span>âŒ‚</span>
+          <span>⌂</span>
           <small>
             Dashboard
           </small>
@@ -1440,7 +1443,7 @@ return (
             setPage("pairing")
           }
         >
-          <span>ï¼‹</span>
+          <span>＋</span>
           <small>
             Pairing
           </small>
@@ -1457,7 +1460,7 @@ return (
             setPage("sessions")
           }
         >
-          <span>â—‰</span>
+          <span>◉</span>
           <small>
             Sessions
           </small>
@@ -1473,7 +1476,7 @@ return (
         <div className="toast">
 
           <span>
-            âœ“
+            ✓
           </span>
 
           {message}
