@@ -2291,3 +2291,32 @@ input {
   }
 
 }
+/* =========================================
+   FIX FOOTER AGAR TIDAK TERTUTUP BOTTOM NAV
+========================================= */
+
+.app {
+  padding-bottom: 150px;
+}
+
+/* Footer */
+.site-footer {
+  width: 100%;
+  margin-top: 40px;
+  padding: 25px 20px 160px;
+  box-sizing: border-box;
+}
+
+/* Jarak tambahan untuk mobile */
+@media (max-width: 600px) {
+
+  .app {
+    padding-bottom: 170px;
+  }
+
+  .site-footer {
+    margin-top: 30px;
+    padding: 20px 15px 180px;
+  }
+
+}
