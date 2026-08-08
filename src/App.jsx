@@ -84,7 +84,9 @@ function App() {
       document.removeEventListener("touchstart", playMusic);
     };
   }, []);
-
+if (window.location.pathname === "/doc") {
+    return <Docs />;
+  }
   
   const [page, setPage] = useState("dashboard");
 
