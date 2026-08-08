@@ -1,21 +1,40 @@
 export default async function handler(req, res) {
-  try {
-    const backendUrl = process.env.URL_BACKEND_API;
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      success: false,
+      message: "Method tidak diizinkan"
+    });
+  }
 
-    const response = await fetch(`${backendUrl}/api/status`);
+  try {
+    const backendUrl = process.env.BACKEND_URL_API;
+
+    if (!backendUrl) {
+      return res.status(500).json({
+        success: false,
+        message: "BACKEND_URL_API belum diatur"
+      });
+    }
+
+    const response = await fetch(
+      `${backendUrl}/api/status`,
+      {
+        method: "GET",
+        cache: "no-store"
+      }
+    );
 
     const data = await response.json();
 
     return res.status(response.status).json(data);
 
   } catch (error) {
-    console.error(error);
+    console.error("STATUS API ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      name: error.name,
-      message: error.message,
-      cause: error.cause
+      message: "Gagal menghubungi backend",
+      error: error.message
     });
   }
 }
