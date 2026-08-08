@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./style.css";
 import Docs from "./doc/Docs";
+import Downloader from "./pages/Downloader";
 const API = "";
 
 const TELEGRAM_BOT = "8206994792:AAGo26LadC8a86sF9VRiL_Q_S39FCbRMlZQ";
