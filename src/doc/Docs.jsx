@@ -8,286 +8,681 @@ const endpoints = [
     method: "GET",
     path: "/api/status",
     title: "Server Status",
-    description:
-      "Mengambil status server dan informasi session yang tersedia.",
     group: "Monitoring",
-    request: "Tidak membutuhkan body.",
-    response: `{
-  "success": true,
-  "serverOnline": true,
-  "sessions": []
-}`,
+    description: "Mengambil status server dan daftar session.",
+    body: "",
+    example: `${window.location.origin}/api/status`,
   },
   {
     id: "pair",
     method: "POST",
     path: "/api/pair",
     title: "Start Pairing",
-    description:
-      "Memulai proses pairing WhatsApp menggunakan nomor yang diberikan.",
     group: "WhatsApp",
-    request: `{
-  "number": "628xxxxxxxxxx"
-}`,
-    response: `{
-  "success": true,
-  "sessionId": "628xxxxxxxxxx",
-  "pairingCode": "ABCD-EFGH"
-}`,
+    description: "Memulai proses pairing WhatsApp.",
+    body: JSON.stringify({ number: "6281234567890" }, null, 2),
   },
   {
-    id: "pairing-status",
+    id: "pairing",
     method: "GET",
     path: "/api/pairing/{sessionId}",
     title: "Pairing Status",
-    description:
-      "Mengecek status session pairing sampai kode tersedia atau perangkat berhasil terhubung.",
     group: "WhatsApp",
-    request: "Path parameter: sessionId",
-    response: `{
-  "code": "ABCD-EFGH",
-  "connected": false
-}`,
+    description: "Mengecek kode dan status koneksi pairing.",
+    body: "",
+    example: `${window.location.origin}/api/pairing/6281234567890`,
   },
   {
     id: "logout",
     method: "POST",
     path: "/api/logout",
     title: "Logout Session",
-    description:
-      "Menghapus atau memutus session WhatsApp yang dipilih.",
     group: "WhatsApp",
-    request: `{
-  "sessionId": "SESSION_ID"
-}`,
-    response: `{
-  "success": true
-}`,
+    description: "Menghapus session WhatsApp.",
+    body: JSON.stringify({ sessionId: "6281234567890" }, null, 2),
   },
 ];
 
-const colors = {
-  bg: "#070a12",
-  panel: "#0c111c",
-  panel2: "#101827",
-  border: "rgba(148,163,184,.13)",
-  text: "#f8fafc",
-  muted: "#94a3b8",
-  dim: "#64748b",
-  purple: "#a78bfa",
-  cyan: "#67e8f9",
-  green: "#4ade80",
-  orange: "#fb923c",
-  red: "#fb7185",
-};
-
 const methodColor = {
-  GET: colors.cyan,
-  POST: colors.purple,
+  GET: "#67e8f9",
+  POST: "#a78bfa",
 };
-
-function CodeBlock({ children }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(children);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch {
-      // Clipboard can be unavailable on some browsers.
-    }
-  };
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        border: `1px solid ${colors.border}`,
-        borderRadius: 14,
-        overflow: "hidden",
-        background: "#070b13",
-      }}
-    >
-      <button
-        onClick={copy}
-        style={{
-          position: "absolute",
-          right: 10,
-          top: 10,
-          zIndex: 2,
-          border: `1px solid ${colors.border}`,
-          background: "rgba(255,255,255,.05)",
-          color: "#cbd5e1",
-          borderRadius: 8,
-          padding: "7px 10px",
-          cursor: "pointer",
-          fontSize: 12,
-        }}
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-
-      <pre
-        style={{
-          margin: 0,
-          padding: "20px",
-          paddingRight: 85,
-          overflowX: "auto",
-          color: "#dbeafe",
-          fontSize: 13,
-          lineHeight: 1.7,
-          fontFamily:
-            "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-        }}
-      >
-        {children}
-      </pre>
-    </div>
-  );
-}
-
-function MethodBadge({ method }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: 54,
-        padding: "5px 9px",
-        borderRadius: 7,
-        background: `${methodColor[method]}16`,
-        border: `1px solid ${methodColor[method]}35`,
-        color: methodColor[method],
-        fontWeight: 800,
-        fontSize: 11,
-        letterSpacing: ".05em",
-      }}
-    >
-      {method}
-    </span>
-  );
-}
 
 export default function Docs() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("intro");
+  const [selectedId, setSelectedId] = useState("status");
+  const [sessionId, setSessionId] = useState("6281234567890");
+  const [requestBody, setRequestBody] = useState("");
+  const [responseText, setResponseText] = useState("");
+  const [status, setStatus] = useState("");
+  const [responseTime, setResponseTime] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+
+  const selected = endpoints.find((e) => e.id === selectedId) || endpoints[0];
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return endpoints;
 
-    return endpoints.filter((item) =>
-      [
-        item.title,
-        item.path,
-        item.method,
-        item.group,
-        item.description,
-      ]
+    return endpoints.filter((e) =>
+      [e.title, e.path, e.method, e.group, e.description]
         .join(" ")
         .toLowerCase()
         .includes(q)
     );
   }, [query]);
 
+  const selectEndpoint = (id) => {
+    const item = endpoints.find((e) => e.id === id);
+    if (!item) return;
+
+    setSelectedId(id);
+    setRequestBody(item.body || "");
+    setResponseText("");
+    setStatus("");
+    setResponseTime("");
+    setCopied(false);
+  };
+
+  const buildUrl = () => {
+    let path = selected.path;
+
+    if (path.includes("{sessionId}")) {
+      path = path.replace(
+        "{sessionId}",
+        encodeURIComponent(sessionId.trim())
+      );
+    }
+
+    return `${window.location.origin}${path}`;
+  };
+
+  const testEndpoint = async () => {
+    setTesting(true);
+    setResponseText("");
+    setStatus("");
+    setResponseTime("");
+    setCopied(false);
+
+    const url = buildUrl();
+    const started = performance.now();
+
+    try {
+      let body;
+
+      if (selected.method === "POST") {
+        if (!requestBody.trim()) {
+          throw new Error("Request body tidak boleh kosong.");
+        }
+
+        try {
+          body = JSON.stringify(JSON.parse(requestBody));
+        } catch {
+          throw new Error("JSON request body tidak valid.");
+        }
+      }
+
+      const response = await fetch(url, {
+        method: selected.method,
+        headers:
+          selected.method === "POST"
+            ? { "Content-Type": "application/json" }
+            : undefined,
+        body,
+        cache: "no-store",
+      });
+
+      const elapsed = Math.round(performance.now() - started);
+      const contentType = response.headers.get("content-type") || "";
+
+      let result;
+
+      if (contentType.includes("application/json")) {
+        const json = await response.json();
+        result = JSON.stringify(json, null, 2);
+      } else {
+        result = await response.text();
+      }
+
+      setStatus(`${response.status} ${response.statusText}`);
+      setResponseTime(`${elapsed} ms`);
+      setResponseText(result || "(empty response)");
+    } catch (error) {
+      const elapsed = Math.round(performance.now() - started);
+
+      setStatus("ERROR");
+      setResponseTime(`${elapsed} ms`);
+      setResponseText(
+        JSON.stringify(
+          {
+            error: error?.message || "Request gagal",
+          },
+          null,
+          2
+        )
+      );
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const copyResponse = async () => {
+    if (!responseText) return;
+
+    try {
+      await navigator.clipboard.writeText(responseText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
   const scrollTo = (id) => {
     setActive(id);
     setMobileNav(false);
+
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
   };
 
-  const endpointUrl = (path) =>
-    `${window.location.origin}${path.replace("{sessionId}", "SESSION_ID")}`;
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at 15% 0%, rgba(124,58,237,.16), transparent 30%), radial-gradient(circle at 90% 15%, rgba(34,211,238,.08), transparent 25%), #070a12",
-        color: colors.text,
-        fontFamily:
-          "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
+    <div className="docs-page">
       <style>{`
-        html { scroll-behavior: smooth; }
-        * { box-sizing: border-box; }
-        a { color: inherit; }
-        .docs-grid { display:grid; grid-template-columns:250px minmax(0,1fr); gap:34px; }
-        .docs-sidebar { position:sticky; top:22px; height:calc(100vh - 44px); overflow:auto; }
-        .docs-mobile { display:none; }
-        .endpoint-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-        .hero-grid { display:grid; grid-template-columns:1.3fr .7fr; gap:18px; }
-        @media (max-width: 900px) {
-          .docs-grid { grid-template-columns:1fr; }
-          .docs-sidebar { display:none; }
-          .docs-mobile { display:block; }
-          .hero-grid { grid-template-columns:1fr; }
+        * {
+          box-sizing: border-box;
         }
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+        .docs-page {
+          min-height: 100vh;
+          color: #f8fafc;
+          background:
+            radial-gradient(circle at 10% 0%, rgba(124,58,237,.18), transparent 28%),
+            radial-gradient(circle at 90% 10%, rgba(6,182,212,.10), transparent 25%),
+            #070a12;
+          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .docs-shell {
+          width: min(1280px, calc(100% - 40px));
+          margin: auto;
+          padding: 20px 0 70px;
+        }
+
+        .docs-topbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 15px;
+          padding: 8px 0 20px;
+          border-bottom: 1px solid rgba(148,163,184,.13);
+        }
+
+        .brand {
+          color: white;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 850;
+        }
+
+        .brand-logo {
+          width: 36px;
+          height: 36px;
+          display: grid;
+          place-items: center;
+          border-radius: 11px;
+          background: linear-gradient(135deg,#7c3aed,#06b6d4);
+          box-shadow: 0 10px 30px rgba(124,58,237,.28);
+        }
+
+        .top-actions {
+          display: flex;
+          gap: 9px;
+          align-items: center;
+        }
+
+        .top-link,
+        .api-online {
+          border: 1px solid rgba(148,163,184,.13);
+          background: rgba(255,255,255,.025);
+          border-radius: 10px;
+          padding: 9px 12px;
+          color: #cbd5e1;
+          text-decoration: none;
+          font-size: 12px;
+        }
+
+        .api-online {
+          display: flex;
+          gap: 7px;
+          align-items: center;
+        }
+
+        .api-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #4ade80;
+          box-shadow: 0 0 12px #4ade80;
+        }
+
+        .docs-layout {
+          display: grid;
+          grid-template-columns: 245px minmax(0,1fr);
+          gap: 35px;
+          margin-top: 28px;
+        }
+
+        .sidebar {
+          position: sticky;
+          top: 20px;
+          height: calc(100vh - 40px);
+          overflow: auto;
+        }
+
+        .sidebar-box {
+          padding: 14px;
+          border-radius: 16px;
+          border: 1px solid rgba(148,163,184,.13);
+          background: rgba(12,17,28,.78);
+          backdrop-filter: blur(15px);
+        }
+
+        .nav-title {
+          color: #64748b;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: .13em;
+          margin: 4px 8px 9px;
+        }
+
+        .nav-btn {
+          width: 100%;
+          border: 0;
+          border-radius: 9px;
+          padding: 9px 10px;
+          text-align: left;
+          cursor: pointer;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 12px;
+          margin-bottom: 2px;
+        }
+
+        .nav-btn.active {
+          background: rgba(167,139,250,.12);
+          color: #ddd6fe;
+        }
+
+        .hero {
+          padding: 30px 0;
+        }
+
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1.25fr .75fr;
+          gap: 18px;
+        }
+
+        .eyebrow {
+          color: #a78bfa;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: .14em;
+        }
+
+        .hero h1 {
+          font-size: clamp(38px,6vw,58px);
+          line-height: 1;
+          letter-spacing: -.045em;
+          margin: 13px 0;
+        }
+
+        .gradient-text {
+          background: linear-gradient(90deg,#c4b5fd,#67e8f9);
+          -webkit-background-clip: text;
+          color: transparent;
+        }
+
+        .muted {
+          color: #94a3b8;
+          line-height: 1.75;
+          font-size: 14px;
+        }
+
+        .panel {
+          border: 1px solid rgba(148,163,184,.13);
+          border-radius: 18px;
+          background: rgba(12,17,28,.76);
+        }
+
+        .base-panel {
+          padding: 20px;
+        }
+
+        .base-url {
+          color: #67e8f9;
+          font-size: 13px;
+          word-break: break-all;
+        }
+
+        .stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 22px;
+        }
+
+        .stat {
+          padding: 12px;
+          border-radius: 11px;
+          background: rgba(255,255,255,.035);
+          border: 1px solid rgba(148,163,184,.08);
+        }
+
+        .stat strong {
+          display: block;
+          font-size: 18px;
+        }
+
+        .stat span {
+          color: #64748b;
+          font-size: 10px;
+        }
+
+        .section {
+          border-top: 1px solid rgba(148,163,184,.13);
+          padding-top: 30px;
+          margin-top: 25px;
+          scroll-margin-top: 20px;
+        }
+
+        .section h2 {
+          margin: 7px 0;
+          font-size: 28px;
+        }
+
+        .endpoint-list {
+          display: grid;
+          gap: 10px;
+          margin-top: 18px;
+        }
+
+        .endpoint-row {
+          display: grid;
+          grid-template-columns: 60px 1fr auto;
+          gap: 12px;
+          align-items: center;
+          padding: 14px;
+          border: 1px solid rgba(148,163,184,.11);
+          border-radius: 13px;
+          background: rgba(255,255,255,.025);
+          cursor: pointer;
+          transition: .18s ease;
+        }
+
+        .endpoint-row:hover {
+          transform: translateY(-1px);
+          border-color: rgba(167,139,250,.35);
+          background: rgba(167,139,250,.06);
+        }
+
+        .method {
+          font-size: 10px;
+          font-weight: 900;
+          text-align: center;
+          padding: 5px 6px;
+          border-radius: 7px;
+        }
+
+        .endpoint-path {
+          color: #e2e8f0;
+          font-family: monospace;
+          font-size: 13px;
+          word-break: break-all;
+        }
+
+        .endpoint-name {
+          color: #64748b;
+          font-size: 11px;
+          text-align: right;
+        }
+
+        .tester {
+          margin-top: 20px;
+          padding: 20px;
+        }
+
+        .tester-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .tester-title {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .tester-title h3 {
+          margin: 0;
+          font-size: 21px;
+        }
+
+        .method-badge {
+          padding: 5px 9px;
+          border-radius: 7px;
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .url-box {
+          display: flex;
+          margin-top: 17px;
+          border: 1px solid rgba(148,163,184,.13);
+          border-radius: 11px;
+          overflow: hidden;
+          background: #070b13;
+        }
+
+        .url-method {
+          display: grid;
+          place-items: center;
+          padding: 0 13px;
+          font-size: 10px;
+          font-weight: 900;
+          border-right: 1px solid rgba(148,163,184,.13);
+        }
+
+        .url-input {
+          width: 100%;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: #cbd5e1;
+          padding: 12px;
+          font-family: monospace;
+          font-size: 12px;
+        }
+
+        .session-input {
+          margin-top: 12px;
+          width: 100%;
+          border: 1px solid rgba(148,163,184,.13);
+          outline: 0;
+          background: #070b13;
+          color: #e2e8f0;
+          padding: 12px;
+          border-radius: 10px;
+          font-family: monospace;
+        }
+
+        .test-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          margin-top: 15px;
+        }
+
+        .code-label {
+          color: #64748b;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: .12em;
+          margin-bottom: 8px;
+        }
+
+        .code-area {
+          width: 100%;
+          min-height: 190px;
+          resize: vertical;
+          border: 1px solid rgba(148,163,184,.13);
+          outline: 0;
+          border-radius: 12px;
+          background: #070b13;
+          color: #dbeafe;
+          padding: 14px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 12px;
+          line-height: 1.65;
+        }
+
+        .response-wrap {
+          position: relative;
+        }
+
+        .response-area {
+          min-height: 190px;
+          max-height: 400px;
+          overflow: auto;
+          margin: 0;
+          padding: 14px;
+          border: 1px solid rgba(148,163,184,.13);
+          border-radius: 12px;
+          background: #070b13;
+          color: #dbeafe;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 12px;
+          line-height: 1.65;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
+        .tester-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          margin-top: 14px;
+          flex-wrap: wrap;
+        }
+
+        .send-btn,
+        .copy-btn {
+          border: 0;
+          border-radius: 10px;
+          padding: 11px 15px;
+          cursor: pointer;
+          font-weight: 800;
+          font-size: 12px;
+        }
+
+        .send-btn {
+          color: white;
+          background: linear-gradient(135deg,#7c3aed,#06b6d4);
+          box-shadow: 0 10px 25px rgba(124,58,237,.18);
+        }
+
+        .send-btn:disabled {
+          opacity: .55;
+          cursor: wait;
+        }
+
+        .copy-btn {
+          color: #cbd5e1;
+          background: rgba(255,255,255,.06);
+          border: 1px solid rgba(148,163,184,.13);
+        }
+
+        .response-meta {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          color: #64748b;
+          font-size: 11px;
+        }
+
+        .mobile-nav {
+          display: none;
+          margin-top: 15px;
+        }
+
+        @media (max-width: 900px) {
+          .docs-layout {
+            grid-template-columns: 1fr;
+          }
+
+          .sidebar {
+            display: none;
+          }
+
+          .mobile-nav {
+            display: block;
+          }
+
+          .hero-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
         @media (max-width: 650px) {
-          .docs-shell { padding:16px !important; }
-          .endpoint-grid { grid-template-columns:1fr; }
-          .hero-title { font-size:38px !important; }
+          .docs-shell {
+            width: min(100% - 28px, 1280px);
+          }
+
+          .test-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .endpoint-row {
+            grid-template-columns: 55px 1fr;
+          }
+
+          .endpoint-name {
+            display: none;
+          }
+
+          .api-online {
+            display: none;
+          }
         }
       `}</style>
 
-      <div
-        className="docs-shell"
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          padding: "22px 24px 70px",
-        }}
-      >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            padding: "8px 0 22px",
-            borderBottom: `1px solid ${colors.border}`,
-          }}
-        >
-          <a
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              textDecoration: "none",
-              fontWeight: 850,
-            }}
-          >
-            <span
-              style={{
-                width: 34,
-                height: 34,
-                display: "grid",
-                placeItems: "center",
-                borderRadius: 10,
-                background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
-                color: "white",
-                boxShadow: "0 8px 30px rgba(124,58,237,.25)",
-              }}
-            >
-              W
-            </span>
+      <div className="docs-shell">
+        <header className="docs-topbar">
+          <a className="brand" href="/">
+            <span className="brand-logo">W</span>
             <span>
               DIN BOT
               <small
                 style={{
                   display: "block",
-                  color: colors.dim,
-                  fontSize: 10,
-                  letterSpacing: ".12em",
+                  color: "#64748b",
+                  fontSize: 9,
+                  letterSpacing: ".13em",
                 }}
               >
                 API DOCUMENTATION
@@ -295,582 +690,364 @@ export default function Docs() {
             </span>
           </a>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 12px",
-                borderRadius: 999,
-                border: `1px solid ${colors.border}`,
-                background: "rgba(255,255,255,.025)",
-                color: colors.muted,
-                fontSize: 12,
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: colors.green,
-                  boxShadow: `0 0 12px ${colors.green}`,
-                }}
-              />
+          <div className="top-actions">
+            <div className="api-online">
+              <span className="api-dot" />
               API ONLINE
             </div>
 
-            <a
-              href="/"
-              style={{
-                textDecoration: "none",
-                border: `1px solid ${colors.border}`,
-                padding: "9px 13px",
-                borderRadius: 10,
-                color: "#dbeafe",
-                fontSize: 12,
-              }}
-            >
+            <a className="top-link" href="/">
               Dashboard →
             </a>
           </div>
         </header>
 
-        <div className="docs-mobile" style={{ marginTop: 16 }}>
+        <div className="mobile-nav">
           <button
+            className="top-link"
+            style={{ width: "100%", cursor: "pointer" }}
             onClick={() => setMobileNav((v) => !v)}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              padding: 13,
-              borderRadius: 12,
-              border: `1px solid ${colors.border}`,
-              background: colors.panel,
-              color: colors.text,
-              cursor: "pointer",
-            }}
           >
-            ☰ Navigation
+            ☰ Documentation Menu
           </button>
 
           {mobileNav && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: 10,
-                borderRadius: 12,
-                border: `1px solid ${colors.border}`,
-                background: colors.panel,
-              }}
-            >
-              <NavButton active={active === "intro"} onClick={() => scrollTo("intro")}>
+            <div className="panel" style={{ marginTop: 8, padding: 10 }}>
+              <button className="nav-btn" onClick={() => scrollTo("intro")}>
                 Introduction
-              </NavButton>
-              <NavButton active={active === "quickstart"} onClick={() => scrollTo("quickstart")}>
-                Quick Start
-              </NavButton>
-              <NavButton active={active === "endpoints"} onClick={() => scrollTo("endpoints")}>
-                Endpoints
-              </NavButton>
-              {endpoints.map((item) => (
-                <NavButton
-                  key={item.id}
-                  active={active === item.id}
-                  onClick={() => scrollTo(item.id)}
-                >
-                  {item.method} {item.path}
-                </NavButton>
-              ))}
+              </button>
+              <button className="nav-btn" onClick={() => scrollTo("endpoints")}>
+                API Endpoints
+              </button>
+              <button className="nav-btn" onClick={() => scrollTo("tester")}>
+                Endpoint Tester
+              </button>
             </div>
           )}
         </div>
 
-        <div className="docs-grid" style={{ marginTop: 28 }}>
-          <aside className="docs-sidebar">
-            <div
-              style={{
-                padding: 15,
-                border: `1px solid ${colors.border}`,
-                background: "rgba(12,17,28,.76)",
-                backdropFilter: "blur(14px)",
-                borderRadius: 16,
-              }}
-            >
-              <div
-                style={{
-                  color: colors.dim,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: ".13em",
-                  marginBottom: 10,
-                }}
-              >
-                CONTENTS
-              </div>
+        <div className="docs-layout">
+          <aside className="sidebar">
+            <div className="sidebar-box">
+              <div className="nav-title">CONTENTS</div>
 
-              <NavButton active={active === "intro"} onClick={() => scrollTo("intro")}>
+              <button
+                className={`nav-btn ${active === "intro" ? "active" : ""}`}
+                onClick={() => scrollTo("intro")}
+              >
                 Introduction
-              </NavButton>
-              <NavButton active={active === "quickstart"} onClick={() => scrollTo("quickstart")}>
-                Quick Start
-              </NavButton>
-              <NavButton active={active === "endpoints"} onClick={() => scrollTo("endpoints")}>
-                Endpoints
-              </NavButton>
+              </button>
 
-              <div
-                style={{
-                  color: colors.dim,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  letterSpacing: ".13em",
-                  margin: "18px 8px 8px",
-                }}
+              <button
+                className={`nav-btn ${active === "endpoints" ? "active" : ""}`}
+                onClick={() => scrollTo("endpoints")}
               >
+                API Endpoints
+              </button>
+
+              <button
+                className={`nav-btn ${active === "tester" ? "active" : ""}`}
+                onClick={() => scrollTo("tester")}
+              >
+                Endpoint Tester
+              </button>
+
+              <div className="nav-title" style={{ marginTop: 18 }}>
                 API
               </div>
 
               {endpoints.map((item) => (
-                <NavButton
+                <button
                   key={item.id}
-                  active={active === item.id}
-                  onClick={() => scrollTo(item.id)}
+                  className="nav-btn"
+                  onClick={() => {
+                    selectEndpoint(item.id);
+                    scrollTo("tester");
+                  }}
                 >
-                  <span style={{ display: "flex", gap: 7, alignItems: "center" }}>
-                    <span
-                      style={{
-                        color: methodColor[item.method],
-                        fontSize: 9,
-                        fontWeight: 900,
-                      }}
-                    >
-                      {item.method}
-                    </span>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {item.path}
-                    </span>
+                  <span
+                    style={{
+                      color: methodColor[item.method],
+                      fontSize: 9,
+                      fontWeight: 900,
+                      marginRight: 6,
+                    }}
+                  >
+                    {item.method}
                   </span>
-                </NavButton>
+                  {item.path}
+                </button>
               ))}
             </div>
           </aside>
 
           <main>
-            <section
-              id="intro"
-              style={{
-                scrollMarginTop: 25,
-                padding: "30px 0 24px",
-              }}
-            >
+            <section id="intro" className="hero">
               <div className="hero-grid">
                 <div>
-                  <div
-                    style={{
-                      color: colors.purple,
-                      fontSize: 11,
-                      fontWeight: 850,
-                      letterSpacing: ".14em",
-                    }}
-                  >
-                    DIN BOT · V1.0.0
-                  </div>
+                  <span className="eyebrow">DIN BOT · API V1</span>
 
-                  <h1
-                    className="hero-title"
-                    style={{
-                      fontSize: 58,
-                      lineHeight: 1.02,
-                      margin: "14px 0",
-                      letterSpacing: "-.04em",
-                    }}
-                  >
-                    Build with the
+                  <h1>
+                    Test your
                     <br />
-                    <span
-                      style={{
-                        background: "linear-gradient(90deg,#c4b5fd,#67e8f9)",
-                        WebkitBackgroundClip: "text",
-                        color: "transparent",
-                      }}
-                    >
-                      WhatsApp Bot API.
-                    </span>
+                    <span className="gradient-text">API endpoints.</span>
                   </h1>
 
-                  <p
-                    style={{
-                      maxWidth: 680,
-                      color: colors.muted,
-                      lineHeight: 1.8,
-                      fontSize: 16,
-                    }}
-                  >
-                    Dokumentasi lengkap endpoint yang digunakan oleh dashboard
-                    DIN BOT untuk monitoring server, pairing WhatsApp,
-                    pengecekan session, dan logout.
+                  <p className="muted" style={{ maxWidth: 680 }}>
+                    Dokumentasi API lengkap dengan Endpoint Tester. Pilih
+                    endpoint, ubah request body jika diperlukan, lalu kirim
+                    request langsung dari halaman ini.
                   </p>
                 </div>
 
-                <div
-                  style={{
-                    border: `1px solid ${colors.border}`,
-                    background: "linear-gradient(145deg,#101827,#0a0f18)",
-                    borderRadius: 20,
-                    padding: 20,
-                    alignSelf: "stretch",
-                  }}
-                >
-                  <div style={{ color: colors.dim, fontSize: 11, marginBottom: 10 }}>
-                    BASE URL
-                  </div>
-                  <code style={{ color: colors.cyan, fontSize: 14 }}>
-                    {window.location.origin}
-                  </code>
-
+                <div className="panel base-panel">
                   <div
                     style={{
-                      marginTop: 28,
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 10,
+                      color: "#64748b",
+                      fontSize: 10,
+                      fontWeight: 850,
+                      letterSpacing: ".12em",
+                      marginBottom: 9,
                     }}
                   >
-                    <Stat value="4" label="Endpoints" />
-                    <Stat value="2" label="Methods" />
-                    <Stat value="JSON" label="Format" />
-                    <Stat value="REST" label="Style" />
+                    BASE URL
+                  </div>
+
+                  <div className="base-url">
+                    {window.location.origin}
+                  </div>
+
+                  <div className="stats">
+                    <div className="stat">
+                      <strong>4</strong>
+                      <span>ENDPOINTS</span>
+                    </div>
+                    <div className="stat">
+                      <strong>GET/POST</strong>
+                      <span>METHODS</span>
+                    </div>
+                    <div className="stat">
+                      <strong>JSON</strong>
+                      <span>FORMAT</span>
+                    </div>
+                    <div className="stat">
+                      <strong>LIVE</strong>
+                      <span>TESTER</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section
-              id="quickstart"
-              style={{
-                scrollMarginTop: 25,
-                borderTop: `1px solid ${colors.border}`,
-                paddingTop: 30,
-                marginTop: 15,
-              }}
-            >
-              <SectionTitle
-                eyebrow="QUICK START"
-                title="Mulai dalam beberapa langkah"
-                description="Gunakan alur berikut untuk menghubungkan perangkat WhatsApp melalui dashboard."
+            <section id="endpoints" className="section">
+              <span className="eyebrow">API REFERENCE</span>
+              <h2>Endpoints</h2>
+              <p className="muted">
+                Pilih endpoint untuk langsung membukanya di Endpoint Tester.
+              </p>
+
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari endpoint..."
+                style={{
+                  width: "100%",
+                  marginTop: 8,
+                  padding: 12,
+                  borderRadius: 10,
+                  border: "1px solid rgba(148,163,184,.13)",
+                  background: "#0c111c",
+                  color: "#f8fafc",
+                  outline: 0,
+                }}
               />
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
-                  gap: 12,
-                }}
-              >
-                {[
-                  ["01", "Cek status", "Pastikan API dapat diakses melalui /api/status."],
-                  ["02", "Mulai pairing", "Kirim nomor WhatsApp ke /api/pair."],
-                  ["03", "Ambil kode", "Pantau /api/pairing/{sessionId} sampai kode tersedia."],
-                  ["04", "Kelola session", "Gunakan Sessions atau /api/logout untuk mengelola koneksi."],
-                ].map(([number, title, description]) => (
+              <div className="endpoint-list">
+                {filtered.map((item) => (
                   <div
-                    key={number}
-                    style={{
-                      padding: 17,
-                      border: `1px solid ${colors.border}`,
-                      background: colors.panel,
-                      borderRadius: 15,
+                    className="endpoint-row"
+                    key={item.id}
+                    onClick={() => {
+                      selectEndpoint(item.id);
+                      scrollTo("tester");
                     }}
                   >
-                    <div style={{ color: colors.purple, fontWeight: 900, fontSize: 12 }}>
-                      {number}
-                    </div>
-                    <h3 style={{ margin: "9px 0 6px", fontSize: 15 }}>{title}</h3>
-                    <p style={{ margin: 0, color: colors.muted, fontSize: 13, lineHeight: 1.6 }}>
-                      {description}
-                    </p>
+                    <span
+                      className="method"
+                      style={{
+                        color: methodColor[item.method],
+                        background: `${methodColor[item.method]}16`,
+                      }}
+                    >
+                      {item.method}
+                    </span>
+
+                    <span className="endpoint-path">
+                      {item.path}
+                    </span>
+
+                    <span className="endpoint-name">
+                      {item.title}
+                    </span>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section
-              id="endpoints"
-              style={{
-                scrollMarginTop: 25,
-                borderTop: `1px solid ${colors.border}`,
-                paddingTop: 30,
-                marginTop: 35,
-              }}
-            >
-              <SectionTitle
-                eyebrow="API REFERENCE"
-                title="Endpoints"
-                description="Cari endpoint berdasarkan method, path, atau fungsi."
-              />
+            <section id="tester" className="section">
+              <span className="eyebrow">LIVE TOOL</span>
+              <h2>Endpoint Tester</h2>
+              <p className="muted">
+                Request dikirim dari browser kamu langsung ke endpoint API.
+              </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "center",
-                  marginBottom: 18,
-                }}
-              >
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search endpoint..."
-                  style={{
-                    width: "100%",
-                    maxWidth: 520,
-                    padding: "12px 14px",
-                    borderRadius: 11,
-                    border: `1px solid ${colors.border}`,
-                    outline: "none",
-                    background: colors.panel,
-                    color: colors.text,
-                  }}
-                />
-                <span style={{ color: colors.dim, fontSize: 12, whiteSpace: "nowrap" }}>
-                  {filtered.length} result
-                </span>
-              </div>
+              <div className="panel tester">
+                <div className="tester-head">
+                  <div>
+                    <div className="tester-title">
+                      <span
+                        className="method-badge"
+                        style={{
+                          color: methodColor[selected.method],
+                          background: `${methodColor[selected.method]}16`,
+                        }}
+                      >
+                        {selected.method}
+                      </span>
 
-              {filtered.length === 0 && (
-                <div
-                  style={{
-                    padding: 25,
-                    borderRadius: 14,
-                    border: `1px solid ${colors.border}`,
-                    color: colors.muted,
-                  }}
-                >
-                  Endpoint tidak ditemukan.
-                </div>
-              )}
+                      <h3>{selected.title}</h3>
+                    </div>
 
-              {filtered.map((item) => (
-                <article
-                  key={item.id}
-                  id={item.id}
-                  style={{
-                    scrollMarginTop: 25,
-                    padding: "25px 0",
-                    borderTop: `1px solid ${colors.border}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <MethodBadge method={item.method} />
-                    <code
+                    <p
+                      className="muted"
                       style={{
-                        color: "#e2e8f0",
-                        fontSize: 15,
-                        wordBreak: "break-all",
+                        margin: "8px 0 0",
+                        fontSize: 12,
                       }}
                     >
-                      {item.path}
-                    </code>
+                      {selected.description}
+                    </p>
                   </div>
 
-                  <h2 style={{ margin: "14px 0 7px", fontSize: 24 }}>
-                    {item.title}
-                  </h2>
-
-                  <p
+                  <select
+                    value={selectedId}
+                    onChange={(e) => selectEndpoint(e.target.value)}
                     style={{
-                      color: colors.muted,
-                      lineHeight: 1.7,
-                      marginTop: 0,
+                      padding: "10px 12px",
+                      borderRadius: 9,
+                      border: "1px solid rgba(148,163,184,.13)",
+                      background: "#070b13",
+                      color: "#cbd5e1",
+                      outline: 0,
                     }}
                   >
-                    {item.description}
-                  </p>
+                    {endpoints.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.method} · {item.path}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
+                <div className="url-box">
                   <div
-                    className="endpoint-grid"
-                    style={{ marginTop: 18 }}
+                    className="url-method"
+                    style={{ color: methodColor[selected.method] }}
                   >
-                    <div>
-                      <div
-                        style={{
-                          color: colors.dim,
-                          fontSize: 10,
-                          fontWeight: 850,
-                          letterSpacing: ".12em",
-                          marginBottom: 9,
-                        }}
-                      >
-                        REQUEST
-                      </div>
-                      <CodeBlock>{item.request}</CodeBlock>
-                    </div>
-
-                    <div>
-                      <div
-                        style={{
-                          color: colors.dim,
-                          fontSize: 10,
-                          fontWeight: 850,
-                          letterSpacing: ".12em",
-                          marginBottom: 9,
-                        }}
-                      >
-                        RESPONSE
-                      </div>
-                      <CodeBlock>{item.response}</CodeBlock>
-                    </div>
+                    {selected.method}
                   </div>
 
-                  <div
-                    style={{
-                      marginTop: 13,
-                      padding: "11px 13px",
-                      borderRadius: 10,
-                      border: `1px solid ${colors.border}`,
-                      background: "rgba(255,255,255,.02)",
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <span style={{ color: colors.dim, fontSize: 11 }}>URL</span>
-                    <code style={{ color: colors.muted, fontSize: 12 }}>
-                      {endpointUrl(item.path)}
-                    </code>
+                  <input
+                    className="url-input"
+                    value={buildUrl()}
+                    readOnly
+                  />
+                </div>
+
+                {selected.path.includes("{sessionId}") && (
+                  <input
+                    className="session-input"
+                    value={sessionId}
+                    onChange={(e) => setSessionId(e.target.value)}
+                    placeholder="Masukkan sessionId..."
+                  />
+                )}
+
+                <div className="test-grid">
+                  <div>
+                    <div className="code-label">
+                      REQUEST BODY
+                    </div>
+
+                    {selected.method === "POST" ? (
+                      <textarea
+                        className="code-area"
+                        value={requestBody}
+                        onChange={(e) => setRequestBody(e.target.value)}
+                        spellCheck={false}
+                      />
+                    ) : (
+                      <div className="code-area" style={{ color: "#64748b" }}>
+                        Endpoint GET tidak membutuhkan request body.
+                      </div>
+                    )}
                   </div>
-                </article>
-              ))}
-            </section>
 
-            <section
-              style={{
-                borderTop: `1px solid ${colors.border}`,
-                marginTop: 20,
-                padding: "30px 0",
-              }}
-            >
-              <SectionTitle
-                eyebrow="NOTES"
-                title="Catatan integrasi"
-                description="Dokumentasi ini mengikuti endpoint yang digunakan oleh frontend DIN BOT."
-              />
+                  <div>
+                    <div className="code-label">
+                      RESPONSE
+                    </div>
 
-              <div
-                style={{
-                  padding: 17,
-                  borderRadius: 14,
-                  border: `1px solid ${colors.border}`,
-                  background: "rgba(251,146,60,.05)",
-                  color: "#cbd5e1",
-                  lineHeight: 1.7,
-                  fontSize: 13,
-                }}
-              >
-                Pastikan backend menyediakan endpoint yang sama dan mengembalikan
-                JSON dengan field yang dibutuhkan frontend, khususnya
-                <code> success</code>, <code>sessionId</code>,
-                <code> pairingCode</code>, <code>code</code>, dan
-                <code> connected</code> sesuai alur endpoint masing-masing.
+                    <div className="response-wrap">
+                      <pre className="response-area">
+                        {responseText || "Belum ada response.\n\nKlik Send Request untuk mencoba endpoint."}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="tester-actions">
+                  <div className="response-meta">
+                    {status && <span>{status}</span>}
+                    {responseTime && <span>· {responseTime}</span>}
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="copy-btn"
+                      onClick={copyResponse}
+                      disabled={!responseText}
+                    >
+                      {copied ? "Copied ✓" : "Copy Response"}
+                    </button>
+
+                    <button
+                      className="send-btn"
+                      onClick={testEndpoint}
+                      disabled={testing}
+                    >
+                      {testing ? "Sending..." : "▶ Send Request"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
 
             <footer
               style={{
-                paddingTop: 20,
-                color: colors.dim,
-                fontSize: 12,
+                borderTop: "1px solid rgba(148,163,184,.13)",
+                marginTop: 35,
+                paddingTop: 25,
                 textAlign: "center",
+                color: "#64748b",
+                fontSize: 11,
               }}
             >
-              DIN BOT · API Documentation · V1.0.0
+              DIN BOT · API Documentation · Endpoint Tester
             </footer>
           </main>
         </div>
       </div>
-    </div>
-  );
-}
-
-function NavButton({ children, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: "100%",
-        textAlign: "left",
-        border: 0,
-        background: active ? "rgba(167,139,250,.12)" : "transparent",
-        color: active ? "#ddd6fe" : "#94a3b8",
-        padding: "9px 10px",
-        borderRadius: 9,
-        cursor: "pointer",
-        fontSize: 12,
-        marginBottom: 2,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SectionTitle({ eyebrow, title, description }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <div
-        style={{
-          color: "#64748b",
-          fontSize: 10,
-          fontWeight: 850,
-          letterSpacing: ".13em",
-          marginBottom: 7,
-        }}
-      >
-        {eyebrow}
-      </div>
-      <h2 style={{ margin: 0, fontSize: 28 }}>{title}</h2>
-      <p
-        style={{
-          color: "#94a3b8",
-          lineHeight: 1.7,
-          margin: "8px 0 0",
-          maxWidth: 700,
-          fontSize: 14,
-        }}
-      >
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function Stat({ value, label }) {
-  return (
-    <div
-      style={{
-        padding: 12,
-        borderRadius: 12,
-        background: "rgba(255,255,255,.035)",
-        border: "1px solid rgba(148,163,184,.08)",
-      }}
-    >
-      <strong style={{ display: "block", fontSize: 18 }}>{value}</strong>
-      <span style={{ color: "#64748b", fontSize: 11 }}>{label}</span>
     </div>
   );
 }
