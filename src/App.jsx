@@ -96,6 +96,9 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* BACKGROUND TECH GRID */}
+      <div className="tech-grid-bg"></div>
+
       {showSplash && (
         <div className="splash-screen">
           <div className="splash-content">
@@ -109,7 +112,6 @@ function App() {
 
       {message && <div className="toast-notification">{message}</div>}
 
-      {/* KONTEN UTAMA */}
       <main className="main-content-mobile">
         
         {/* HEADER ATAS */}
@@ -266,8 +268,8 @@ function App() {
               <h1>Sesi Aktif</h1>
               <p>Daftar perangkat WhatsApp yang terhubung ke bot.</p>
             </div>
-            <div className="card-box text-center">
-              <p className="text-muted">Tidak ada sesi tambahan yang aktif saat ini.</p>
+            <div className="card-box text-center" style={{ justifyContent: "center" }}>
+              <p className="text-muted" style={{ fontSize: "13px" }}>Tidak ada sesi tambahan yang aktif saat ini.</p>
             </div>
           </div>
         )}
