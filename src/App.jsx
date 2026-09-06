@@ -69,7 +69,7 @@ function App() {
     return value;
   };
 
-  // FUNGSI MASKING / SENSOR NOMOR
+  // MASKING NOMOR SESI
   const maskNumber = (number) => {
     if (!number) return "-";
     const value = String(number);
@@ -352,6 +352,17 @@ function App() {
                       <button onClick={copyPairingCode} className="copy-btn">
                         {copied ? "Disalin!" : "Salin"}
                       </button>
+                    </div>
+
+                    {/* ARAHAN / INSTRUKSI CARA MEMASUKKAN KODE */}
+                    <div className="pairing-instruction" style={{ marginTop: "14px", borderTop: "1px dashed rgba(139,92,246,0.3)", paddingTop: "12px", textAlign: "left" }}>
+                      <span style={{ fontSize: "11px", color: "#c084fc", fontWeight: "700", display: "block", marginBottom: "6px" }}>📋 CARA MENGGUNAKAN KODE:</span>
+                      <ol style={{ fontSize: "11.5px", color: "#cbd5e1", paddingLeft: "16px", lineHeight: "1.5", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <li>Buka aplikasi <b>WhatsApp</b> di HP kamu.</li>
+                        <li>Ketuk Titik Tiga (Android) atau Pengaturan (iPhone) → <b>Perangkat Tertaut</b>.</li>
+                        <li>Ketuk <b>Tautkan Perangkat</b> lalu pilih <b>Tautkan dengan nomor telepon saja</b>.</li>
+                        <li>Masukkan kode di atas untuk menghubungkan bot.</li>
+                      </ol>
                     </div>
                   </div>
                 )}
