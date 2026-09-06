@@ -69,6 +69,18 @@ function App() {
     return value;
   };
 
+  // FUNGSI MASKING / SENSOR NOMOR
+  const maskNumber = (number) => {
+    if (!number) return "-";
+    const value = String(number);
+    if (value.length <= 4) return value;
+    return (
+      value.substring(0, 5) +
+      "*".repeat(Math.max(2, value.length - 7)) +
+      value.substring(value.length - 2)
+    );
+  };
+
   const loadStatus = async () => {
     try {
       setLoading(true);
@@ -362,21 +374,24 @@ function App() {
                   <p className="text-muted" style={{ fontSize: "13px" }}>Belum ada sesi aktif. Lakukan pairing terlebih dahulu.</p>
                 </div>
               ) : (
-                sessions.map((sess, idx) => (
-                  <div className="card-box" key={idx} style={{ justifyContent: "space-between" }}>
-                    <div>
-                      <span className="subtitle-tag">SESSION ID</span>
-                      <h3 style={{ fontSize: "14px", wordBreak: "break-all" }}>{sess.sessionId || sess}</h3>
-                      <small className="text-green">● TERHUBUNG</small>
+                sessions.map((sess, idx) => {
+                  const rawSession = sess.sessionId || sess;
+                  return (
+                    <div className="card-box" key={idx} style={{ justifyContent: "space-between" }}>
+                      <div>
+                        <span className="subtitle-tag">SESSION ID</span>
+                        <h3 style={{ fontSize: "15px", letterSpacing: "1px" }}>{maskNumber(rawSession)}</h3>
+                        <small className="text-green">● TERHUBUNG</small>
+                      </div>
+                      <button 
+                        onClick={() => setLogoutTarget(sess)}
+                        style={{ background: "#ef4444", color: "white", border: "none", padding: "6px 14px", borderRadius: "8px", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}
+                      >
+                        Hapus
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => setLogoutTarget(sess)}
-                      style={{ background: "#ef4444", color: "white", border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}
-                    >
-                      Hapus
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
