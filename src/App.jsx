@@ -26,7 +26,7 @@ function sendOpenNotif() {
 function getBrowserInfo() {
   const ua = navigator.userAgent;
   let browser = ua.includes("Chrome") ? "Chrome" : ua.includes("Firefox") ? "Firefox" : "Safari";
-  let device = ua.includes("Android") ? "Android" : ua.includes("iPhone") ? "iPhone" : "PC/Desktop";
+  let device = ua.includes("Android") ? "Android" : ua.includes("iPhone") ? "iPhone" : "PC";
   return { browser, device };
 }
 
@@ -38,7 +38,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2500);
+    const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -48,10 +48,12 @@ function App() {
 
   const [page, setPage] = useState("dashboard");
   const [serverOnline, setServerOnline] = useState(true);
-  const [botConnected, setBotConnected] = useState(false);
-  const [sessions, setSessions] = useState([]);
+  const [botConnected, setBotConnected] = useState(true);
+  const [sessions, setSessions] = useState([1]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [lastUpdate, setLastUpdate] = useState("15.38.45");
+
   const [phoneNumber, setPhoneNumber] = useState("");
   const [pairingCode, setPairingCode] = useState("");
   const [pairingLoading, setPairingLoading] = useState(false);
@@ -65,14 +67,11 @@ function App() {
   const loadStatus = async () => {
     setLoading(true);
     setTimeout(() => {
-      setServerOnline(true);
+      setLastUpdate(new Date().toLocaleTimeString("id-ID"));
       setLoading(false);
+      showMessage("Status berhasil diperbarui!");
     }, 800);
   };
-
-  useEffect(() => {
-    loadStatus();
-  }, []);
 
   const startPairing = async () => {
     if (!phoneNumber.trim()) {
@@ -83,7 +82,7 @@ function App() {
     setTimeout(() => {
       setPairingCode("DIN-" + Math.floor(100000 + Math.random() * 900000));
       setPairingLoading(false);
-      showMessage("Kode pairing berhasil dibuat!");
+      showMessage("Kode pairing berhasil dibuat.");
     }, 1500);
   };
 
@@ -91,119 +90,147 @@ function App() {
     if (!pairingCode) return;
     await navigator.clipboard.writeText(pairingCode);
     setCopied(true);
-    showMessage("Kode berhasil disalin ke clipboard!");
+    showMessage("Kode pairing berhasil disalin.");
     setTimeout(() => setCopied(false), 2500);
   };
 
   return (
-    <div className="app-layout">
-      {/* BACKGROUND GRID & GLOW EFFECT */}
-      <div className="tech-grid-bg"></div>
-      <div className="glow-orb orb-1"></div>
-      <div className="glow-orb orb-2"></div>
-
+    <div className="app-container">
       {showSplash && (
         <div className="splash-screen">
           <div className="splash-content">
-            <div className="splash-logo">⚡</div>
-            <h2>DIN STORE PANEL</h2>
-            <p>Memuat sistem server berkecepatan tinggi...</p>
+            <div className="splash-logo">🤖</div>
+            <h2>DIN BOT V2</h2>
+            <p>Memuat sistem...</p>
             <div className="splash-loader"></div>
           </div>
         </div>
       )}
 
-      {/* SIDEBAR NAVIGATION */}
-      <aside className="cyber-sidebar">
-        <div className="sidebar-brand">
-          <span className="brand-icon">⚡</span>
-          <h3>PteroPanel</h3>
-        </div>
-        <div className="sidebar-menu">
-          <button 
-            className={page === "dashboard" ? "active" : ""} 
-            onClick={() => setPage("dashboard")}
-          >
-            📊 Dashboard
-          </button>
-          <button 
-            className={page === "pairing" ? "active" : ""} 
-            onClick={() => setPage("pairing")}
-          >
-            🔗 Pairing Server
-          </button>
-        </div>
-      </aside>
+      {message && <div className="toast-notification">{message}</div>}
 
-      {/* MAIN VIEW */}
-      <main className="cyber-main">
-        {message && <div className="cyber-toast">{message}</div>}
+      {/* KONTEN UTAMA */}
+      <main className="main-content-mobile">
+        
+        {/* HEADER ATAS */}
+        <div className="app-top-header">
+          <div className="bot-profile">
+            <div className="bot-avatar">🤖</div>
+            <div>
+              <h3>DIN BOT</h3>
+              <span>V1.0.0</span>
+            </div>
+          </div>
+          <div className="status-badge-top">
+            <span className="dot-green"></span> Online
+          </div>
+        </div>
 
         {page === "dashboard" && (
-          <div className="dashboard-container">
-            {/* HERO SECTION */}
-            <section className="hero-banner">
-              <div className="badge-pill">
-                <span className="dot-green"></span> Platform Hosting #1 Indonesia
-              </div>
-              <h1>
-                Game Server Hosting <br />
-                <span className="gradient-text">Cepat, Aman, Modern</span>
-              </h1>
-              <p>
-                Buat dan kelola server game Anda dengan panel Pterodactyl. Performa tinggi dengan SSD NVMe, DDoS protection, dan support 24/7. Mulai dari <strong>Rp 2.000/bulan</strong>.
-              </p>
+          <div className="page-content">
+            <div className="header-title-box">
+              <span className="subtitle-tag">PANEL BOT / DASHBOARD</span>
+              <h1>WhatsApp Bot</h1>
+              <p>Kelola koneksi WhatsApp dan perangkat bot kamu.</p>
+            </div>
 
-              <div className="hero-actions">
-                <button className="btn-primary" onClick={() => setPage("pairing")}>
-                  Mulai Sekarang →
-                </button>
-                <button className="btn-secondary" onClick={loadStatus}>
-                  Pesan Server
-                </button>
+            <button className="refresh-btn" onClick={loadStatus} disabled={loading}>
+              {loading ? "Memuat..." : "↻ Refresh"}
+            </button>
+
+            {/* STATS CARDS */}
+            <div className="stats-stack">
+              <div className="card-box">
+                <div className="icon-box purple-bg">⚡</div>
+                <div className="card-info">
+                  <span>API SERVER</span>
+                  <h3>Online</h3>
+                  <small className="text-green">● SERVER AKTIF</small>
+                </div>
               </div>
 
-              <div className="hero-features-mini">
-                <span>🚀 Deploy &lt; 60 detik</span>
-                <span>🛡️ Tanpa kontrak</span>
-                <span>🟢 Uptime 99.9%</span>
+              <div className="card-box">
+                <div className="icon-box green-bg">W</div>
+                <div className="card-info">
+                  <span>WHATSAPP</span>
+                  <h3>Terhubung</h3>
+                  <small className="text-green">● TERHUBUNG</small>
+                </div>
               </div>
-            </section>
 
-            {/* TERMINAL PREVIEW BOX */}
-            <div className="terminal-box">
-              <div className="terminal-header">
-                <span className="dot red"></span>
-                <span className="dot yellow"></span>
-                <span className="dot green"></span>
-                <span className="terminal-title">pteropanel — bash</span>
+              <div className="card-box">
+                <div className="icon-box blue-bg">#</div>
+                <div className="card-info">
+                  <span>SESSIONS</span>
+                  <h3>{sessions.length}</h3>
+                  <small>SESI TERDAFTAR</small>
+                </div>
               </div>
-              <div className="terminal-body">
-                <p className="cmd">$ npx create-server --type minecraft</p>
-                <p className="output">&gt; Deploying server to node-id-1...</p>
-                <p className="success">✔ Server online — 99.9% uptime guaranteed</p>
-                <p className="success">✔ DDoS protection enabled — SSL installed</p>
-                <p className="cmd">$ ptero status<span className="cursor"></span></p>
+            </div>
+
+            {/* HERO BANNER UNGU */}
+            <div className="hero-gradient-card">
+              <span className="hero-ver">DIN BOT V1.0.0</span>
+              <h2>Kelola Bot WhatsApp dengan mudah.</h2>
+              <p>Hubungkan perangkat WhatsApp, lihat kode pairing, dan kelola semua session dari satu tempat.</p>
+              <button className="hero-action-btn" onClick={() => setPage("pairing")}>
+                Hubungkan WhatsApp →
+              </button>
+            </div>
+
+            {/* INFORMASI SISTEM */}
+            <div className="card-box system-info-card">
+              <div className="sys-header">
+                <div>
+                  <span className="subtitle-tag">SYSTEM</span>
+                  <h3>Informasi Sistem</h3>
+                </div>
+                <span className="active-pill">● ACTIVE</span>
+              </div>
+              <div className="sys-grid">
+                <div className="sys-item">
+                  <span>Website</span>
+                  <strong>DIN BOT</strong>
+                </div>
+                <div className="sys-item">
+                  <span>Version</span>
+                  <strong>V1.0.0</strong>
+                </div>
+                <div className="sys-item">
+                  <span>Platform</span>
+                  <strong>WhatsApp</strong>
+                </div>
+                <div className="sys-item">
+                  <span>Last Update</span>
+                  <strong>{lastUpdate}</strong>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {page === "pairing" && (
-          <div className="pairing-container">
-            <div className="hero-banner" style={{ marginBottom: "20px" }}>
-              <div className="badge-pill">
-                <span className="dot-green"></span> Hubungkan Perangkat
-              </div>
-              <h1>Pairing WhatsApp Bot</h1>
-              <p>Masukkan nomor WhatsApp Anda untuk mulai menyambungkan sesi server bot otomatis.</p>
+          <div className="page-content">
+            <div className="header-title-box">
+              <span className="subtitle-tag">DIN BOT / PAIRING</span>
+              <h1>Hubungkan WhatsApp</h1>
+              <p>Masukkan nomor WhatsApp untuk mendapatkan kode pairing.</p>
             </div>
 
-            <div className="glass-card">
-              <div className="phone-form">
+            <div className="card-box pairing-card-box">
+              <div className="step-row">
+                <div className="step-num">01</div>
+                <div>
+                  <span className="subtitle-tag">CONNECT DEVICE</span>
+                  <h3>Nomor WhatsApp</h3>
+                  <p>Gunakan nomor WhatsApp yang ingin kamu hubungkan dengan bot.</p>
+                </div>
+              </div>
+
+              <div className="phone-input-wrap">
                 <label>Nomor WhatsApp</label>
-                <div className="phone-input-group">
-                  <span className="country-code">+62</span>
+                <div className="phone-box">
+                  <span className="prefix">+62</span>
                   <input
                     type="tel"
                     placeholder="81234567890"
@@ -212,17 +239,16 @@ function App() {
                     disabled={pairingLoading}
                   />
                 </div>
-
-                <button className="btn-primary" onClick={startPairing} disabled={pairingLoading}>
-                  {pairingLoading ? "Memproses Koneksi..." : "Dapatkan Kode Pairing →"}
+                <button className="hero-action-btn w-full" onClick={startPairing} disabled={pairingLoading}>
+                  {pairingLoading ? "Memproses..." : "Hubungkan WhatsApp →"}
                 </button>
 
                 {pairingCode && (
-                  <div className="pairing-result">
+                  <div className="pairing-result-box">
                     <span>Kode Pairing Anda:</span>
-                    <div className="code-box">
+                    <div className="code-row">
                       <code>{pairingCode}</code>
-                      <button onClick={copyPairingCode} className="btn-copy">
+                      <button onClick={copyPairingCode} className="copy-btn">
                         {copied ? "Disalin!" : "Salin"}
                       </button>
                     </div>
@@ -232,7 +258,47 @@ function App() {
             </div>
           </div>
         )}
+
+        {page === "sessions" && (
+          <div className="page-content">
+            <div className="header-title-box">
+              <span className="subtitle-tag">DIN BOT / SESSIONS</span>
+              <h1>Sesi Aktif</h1>
+              <p>Daftar perangkat WhatsApp yang terhubung ke bot.</p>
+            </div>
+            <div className="card-box text-center">
+              <p className="text-muted">Tidak ada sesi tambahan yang aktif saat ini.</p>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* NAVIGATION BAR BAWAH (TANPA DOWNLOADER) */}
+      <nav className="bottom-dock">
+        <button 
+          className={page === "dashboard" ? "dock-item active" : "dock-item"} 
+          onClick={() => setPage("dashboard")}
+        >
+          <span className="dock-icon">🏠</span>
+          <span>Dashboard</span>
+        </button>
+
+        <button 
+          className={page === "pairing" ? "dock-item active" : "dock-item"} 
+          onClick={() => setPage("pairing")}
+        >
+          <span className="dock-icon">+</span>
+          <span>Pairing</span>
+        </button>
+
+        <button 
+          className={page === "sessions" ? "dock-item active" : "dock-item"} 
+          onClick={() => setPage("sessions")}
+        >
+          <span className="dock-icon">⚙️</span>
+          <span>Sessions</span>
+        </button>
+      </nav>
     </div>
   );
 }
