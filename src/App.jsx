@@ -35,13 +35,6 @@ window.addEventListener("load", () => {
 });
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   if (window.location.pathname === "/doc") {
     return <Docs />;
   }
@@ -64,7 +57,6 @@ function App() {
     setTimeout(() => setMessage(""), 4000);
   };
 
-  // LOAD STATUS & SESSIONS DARI API BACKEND
   const loadStatus = async () => {
     try {
       setLoading(true);
@@ -82,7 +74,6 @@ function App() {
       setLastUpdate(new Date().toLocaleTimeString("id-ID"));
     } catch (error) {
       console.error("STATUS ERROR:", error);
-      // Fallback jika fetch gagal agar UI tidak blank
       setServerOnline(true);
     } finally {
       setLoading(false);
@@ -93,7 +84,6 @@ function App() {
     loadStatus();
   }, []);
 
-  // PROSES PAIRING NOMOR WHATSAPP
   const startPairing = async () => {
     if (!phoneNumber.trim()) {
       showMessage("Masukkan nomor WhatsApp terlebih dahulu.");
@@ -150,7 +140,6 @@ function App() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  // LOGOUT / HAPUS SESI
   const handleLogout = async (sessionId) => {
     if (!confirm("Yakin ingin menghapus sesi ini?")) return;
     try {
@@ -174,17 +163,6 @@ function App() {
   return (
     <div className="app-container">
       <div className="tech-grid-bg"></div>
-
-      {showSplash && (
-        <div className="splash-screen">
-          <div className="splash-content">
-            <div className="splash-logo">🤖</div>
-            <h2>DIN BOT V2</h2>
-            <p>Memuat sistem...</p>
-            <div className="splash-loader"></div>
-          </div>
-        </div>
-      )}
 
       {message && <div className="toast-notification">{message}</div>}
 
