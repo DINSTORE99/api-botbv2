@@ -52,9 +52,21 @@ function App() {
   const [pairingLoading, setPairingLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // LOGOUT STATE
+  const [logoutTarget, setLogoutTarget] = useState(null);
+  const [logoutNumber, setLogoutNumber] = useState("");
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const showMessage = (text) => {
     setMessage(text);
     setTimeout(() => setMessage(""), 4000);
+  };
+
+  const normalizeNumber = (number) => {
+    let value = String(number || "").replace(/\D/g, "");
+    if (value.startsWith("0")) value = "62" + value.substring(1);
+    if (value.startsWith("8")) value = "62" + value;
+    return value;
   };
 
   const loadStatus = async () => {
@@ -90,11 +102,8 @@ function App() {
       return;
     }
 
-    let number = phoneNumber.replace(/\D/g, "");
-    if (number.startsWith("0")) number = "62" + number.substring(1);
-    else if (number.startsWith("8")) number = "62" + number;
-
-    if (number.length < 10) {
+    const number = normalizeNumber(phoneNumber);
+    if (!number || number.length < 10) {
       showMessage("Nomor WhatsApp tidak valid.");
       return;
     }
@@ -111,7 +120,6 @@ function App() {
       });
 
       const data = await response.json();
-
       if (!data.success) {
         showMessage(data.message || "Gagal memulai pairing.");
         return;
@@ -140,23 +148,43 @@ function App() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleLogout = async (sessionId) => {
-    if (!confirm("Yakin ingin menghapus sesi ini?")) return;
+  const confirmLogout = async () => {
+    if (!logoutTarget) return;
+
+    const input = normalizeNumber(logoutNumber);
+    const target = normalizeNumber(logoutTarget.number || logoutTarget.sessionId);
+
+    if (!input) {
+      showMessage("Masukkan nomor WhatsApp lengkap.");
+      return;
+    }
+
+    if (input !== target) {
+      showMessage("Nomor tidak cocok dengan sesi.");
+      return;
+    }
+
     try {
+      setLogoutLoading(true);
       const response = await fetch(`${API}/api/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({ sessionId: logoutTarget.sessionId || logoutTarget }),
       });
+
       const data = await response.json();
       if (data.success) {
+        setLogoutTarget(null);
+        setLogoutNumber("");
         showMessage("Sesi berhasil dihapus.");
         loadStatus();
       } else {
-        showMessage(data.message || "Gagal menghapus sesi.");
+        showMessage(data.message || "Gagal logout sesi.");
       }
-    } catch (err) {
+    } catch (error) {
       showMessage("Gagal menghubungi server API.");
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
@@ -342,7 +370,7 @@ function App() {
                       <small className="text-green">● TERHUBUNG</small>
                     </div>
                     <button 
-                      onClick={() => handleLogout(sess.sessionId || sess)}
+                      onClick={() => setLogoutTarget(sess)}
                       style={{ background: "#ef4444", color: "white", border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", cursor: "pointer", fontWeight: "600" }}
                     >
                       Hapus
@@ -351,6 +379,42 @@ function App() {
                 ))
               )}
             </div>
+
+            {/* MODAL KONFIRMASI NOMOR SAAT HAPUS SESI */}
+            {logoutTarget && (
+              <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1100, padding: "20px" }}>
+                <div className="card-box" style={{ flexDirection: "column", width: "100%", maxWidth: "400px", background: "#0f172a", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+                  <h3 style={{ fontSize: "16px", marginBottom: "4px", color: "#ef4444" }}>Konfirmasi Hapus Sesi</h3>
+                  <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "16px" }}>Masukkan nomor WhatsApp lengkap yang terdaftar pada sesi ini untuk konfirmasi.</p>
+                  
+                  <div className="phone-box" style={{ width: "100%" }}>
+                    <span className="prefix">+62</span>
+                    <input
+                      type="tel"
+                      placeholder="81234567890"
+                      value={logoutNumber.replace(/^62/, "")}
+                      onChange={(e) => setLogoutNumber("62" + e.target.value.replace(/\D/g, ""))}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+                    <button 
+                      onClick={() => setLogoutTarget(null)}
+                      style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "white", padding: "10px", borderRadius: "10px", fontWeight: "600", cursor: "pointer" }}
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={confirmLogout}
+                      disabled={logoutLoading}
+                      style={{ flex: 1, background: "#ef4444", color: "white", border: "none", padding: "10px", borderRadius: "10px", fontWeight: "600", cursor: "pointer" }}
+                    >
+                      {logoutLoading ? "Memproses..." : "Ya, Hapus"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
