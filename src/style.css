@@ -579,3 +579,35 @@ body {
   from { transform: translate(-50%, -25px); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
 }
+/* FOOTER STYLING */
+.app-footer {
+  text-align: center;
+  padding: 24px 0 10px 0;
+  margin-top: 20px;
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.app-footer p {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.app-footer small {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.app-footer a {
+  color: #c084fc;
+  text-decoration: none;
+  font-weight: 800;
+  transition: color 0.2s ease;
+}
+
+.app-footer a:hover {
+  color: #34d399;
+  text-decoration: underline;
+}
