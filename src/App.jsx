@@ -208,13 +208,13 @@ function App() {
 
       <main className="main-content-mobile">
         
-        {/* HEADER ATAS */}
+        {/* HEADER ATAS DENGAN LOGO BARU */}
         <div className="app-top-header">
           <div className="bot-profile">
-            <div className="bot-avatar">🤖</div>
+            <img src="/logo.png" alt="Bot Din Logo" className="bot-logo-img" />
             <div>
-              <h3>DIN BOT</h3>
-              <span>V2.0.0</span>
+              <h3>BOT DIN</h3>
+              <span>WHATSAPP ASISTEN</span>
             </div>
           </div>
           <div className="status-badge-top">
@@ -269,9 +269,9 @@ function App() {
               </div>
             </div>
 
-            {/* HERO BANNER UNGU */}
+            {/* HERO BANNER */}
             <div className="hero-gradient-card">
-              <span className="hero-ver">DIN BOT V2.0.0</span>
+              <span className="hero-ver">BOT DIN V2.0.0</span>
               <h2>Kelola Bot WhatsApp dengan mudah.</h2>
               <p>Hubungkan perangkat WhatsApp, lihat kode pairing, dan kelola semua session dari satu tempat.</p>
               <button className="hero-action-btn" onClick={() => setPage("pairing")}>
@@ -291,7 +291,7 @@ function App() {
               <div className="sys-grid">
                 <div className="sys-item">
                   <span>Website</span>
-                  <strong>DIN BOT</strong>
+                  <strong>BOT DIN</strong>
                 </div>
                 <div className="sys-item">
                   <span>Version</span>
@@ -313,7 +313,7 @@ function App() {
         {page === "pairing" && (
           <div className="page-content">
             <div className="header-title-box">
-              <span className="subtitle-tag">DIN BOT / PAIRING</span>
+              <span className="subtitle-tag">BOT DIN / PAIRING</span>
               <h1>Hubungkan WhatsApp</h1>
               <p>Masukkan nomor WhatsApp untuk mendapatkan kode pairing.</p>
             </div>
@@ -354,7 +354,7 @@ function App() {
                       </button>
                     </div>
 
-                    {/* ARAHAN / INSTRUKSI CARA MEMASUKKAN KODE */}
+                    {/* INSTRUKSI CARA MASUKKAN KODE */}
                     <div className="pairing-instruction" style={{ marginTop: "14px", borderTop: "1px dashed rgba(139,92,246,0.3)", paddingTop: "12px", textAlign: "left" }}>
                       <span style={{ fontSize: "11px", color: "#c084fc", fontWeight: "700", display: "block", marginBottom: "6px" }}>📋 CARA MENGGUNAKAN KODE:</span>
                       <ol style={{ fontSize: "11.5px", color: "#cbd5e1", paddingLeft: "16px", lineHeight: "1.5", display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -374,7 +374,7 @@ function App() {
         {page === "sessions" && (
           <div className="page-content">
             <div className="header-title-box">
-              <span className="subtitle-tag">DIN BOT / SESSIONS</span>
+              <span className="subtitle-tag">BOT DIN / SESSIONS</span>
               <h1>Sesi Aktif</h1>
               <p>Daftar perangkat sesi WhatsApp yang terhubung.</p>
             </div>
