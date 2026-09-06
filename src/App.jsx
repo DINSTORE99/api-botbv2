@@ -443,6 +443,13 @@ function App() {
             )}
           </div>
         )}
+
+        {/* FOOTER */}
+        <footer className="app-footer">
+          <p>© 2026 <b>BOT DIN</b>. All Rights Reserved.</p>
+          <small>Created with ♥ by <a href="https://t.me/DINN_STORE" target="_blank" rel="noreferrer">DINN STORE</a></small>
+        </footer>
+
       </main>
 
       {/* NAVIGATION BAR BAWAH */}
