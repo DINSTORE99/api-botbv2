@@ -3,63 +3,10 @@ import "./style.css";
 
 const API = "";
 
-const TELEGRAM_BOT = "8206994792:AAGo26LadC8a86sF9VRiL_Q_S39FCbRMlZQ";
-const TELEGRAM_CHAT = "6452266025";
-
-/* =========================
-   TELEGRAM OPEN NOTIF
-========================= */
-function sendOpenNotif() {
-  const info = getBrowserInfo();
-  
-  const message = `
-🌐 WEBSITE dinbot DIBUKA 
-📱 Device: ${info.device}
-🌍 Browser: ${info.browser}
-⏰ Waktu: ${new Date().toLocaleString()}
-🔗 URL: ${window.location.href}
-  `;
-  
-  fetch(`https://api.telegram.org/bot${TELEGRAM_BOT}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT,
-        text: message
-      })
-    })
-    .then(res => res.json())
-    .then(data => console.log("Telegram OK:", data))
-    .catch(err => console.log("Telegram ERROR:", err));
-}
-
-/* =========================
-   DEVICE INFO
-========================= */
-function getBrowserInfo() {
-  const ua = navigator.userAgent;
-  
-  let browser = "Unknown";
-  if (ua.includes("Chrome")) browser = "Chrome";
-  else if (ua.includes("Firefox")) browser = "Firefox";
-  else if (ua.includes("Safari")) browser = "Safari";
-  else if (ua.includes("Edge")) browser = "Edge";
-  
-  let device = "Unknown";
-  if (ua.includes("Android")) device = "Android";
-  else if (ua.includes("iPhone")) device = "iPhone";
-  else if (ua.includes("Windows")) device = "Windows";
-  else if (ua.includes("Linux")) device = "Linux";
-  
-  return { browser, device };
-}
-
-/* =========================
-   AUTO SEND SAAT WEB OPEN
-========================= */
-window.addEventListener("load", () => {
-  sendOpenNotif();
-});
+/*
+ * Jangan simpan token Telegram di frontend.
+ * Semua status bot diambil dari backend melalui /api/status.
+ */
 
 
 function App() {
@@ -697,19 +644,18 @@ function App() {
           <div className="hero-content">
 
             <span className="hero-label">
-              DIN BOT V1.0.0
+              DIN BOT • GRATIS • CEPAT • MUDAH
             </span>
 
             <h2>
-              Kelola Bot WhatsApp
-              dengan mudah.
+              Bot WhatsApp sendiri
+              GRATIS & MUDAH.
             </h2>
 
             <p>
-              Hubungkan perangkat WhatsApp,
-              lihat kode pairing,
-              dan kelola semua session
-              dari satu tempat.
+              Simpel, cepat & aman. Hubungkan WhatsApp,
+              kelola pairing, dan pantau semua session
+              dari satu dashboard.
             </p>
 
             <button
@@ -1229,15 +1175,24 @@ function App() {
                               "Bot WhatsApp"}
                           </h3>
 
-                          <span
-                            className={
-                              session.connected
-                                ? "connected-badge"
-                                : "connected-badge disconnected-badge"
-                            }
-                          >
-                            ● {session.connected ? "Connected" : "Offline"}
-                          </span>
+                          {(() => {
+                            const connected =
+                              session.connected === true ||
+                              session.status === "connected" ||
+                              session.status === "online";
+
+                            return (
+                              <span
+                                className={
+                                  connected
+                                    ? "connected-badge"
+                                    : "connected-badge offline-badge"
+                                }
+                              >
+                                ● {connected ? "Connected" : "Offline"}
+                              </span>
+                            );
+                          })()}
 
                         </div>
 
@@ -1344,15 +1299,15 @@ function App() {
 
           <span
             className={
-              botConnected
+              serverOnline
                 ? "status-dot online-dot"
                 : "status-dot"
             }
           />
 
-          {botConnected
-            ? "Bot Online"
-            : "Bot Offline"}
+          {serverOnline
+            ? "Online"
+            : "Offline"}
 
         </div>
 
