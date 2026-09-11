@@ -1,1201 +1,1319 @@
-import { useEffect, useState } from "react";
-import "./style.css";
-
-import Docs from "./doc/Docs";
+import React, { useEffect, useState } from "react";
+import {
+  FiArrowLeft,
+  FiArrowRight,
+  FiBot,
+  FiCheck,
+  FiChevronDown,
+  FiChevronLeft,
+  FiCopy,
+  FiCpu,
+  FiDownload,
+  FiExternalLink,
+  FiGamepad2,
+  FiHeart,
+  FiHome,
+  FiImage,
+  FiLayers,
+  FiMenu,
+  FiMessageCircle,
+  FiPlay,
+  FiRefreshCw,
+  FiServer,
+  FiSettings,
+  FiShield,
+  FiSmartphone,
+  FiTrash2,
+  FiUsers,
+  FiX,
+  FiZap,
+} from "react-icons/fi";
 
 const API = "";
 
-function navigate(path) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+const RENTAL_WA = "6287776581216";
+
+const features = [
+  {
+    icon: <FiMessageCircle />,
+    title: "AI Chat",
+    text: "Chat dengan AI langsung melalui WhatsApp.",
+    blue: true,
+  },
+  {
+    icon: <FiDownload />,
+    title: "Downloader",
+    text: "Download berbagai media dengan cepat.",
+    blue: true,
+  },
+  {
+    icon: <FiImage />,
+    title: "Sticker Maker",
+    text: "Buat sticker WhatsApp dengan mudah.",
+    blue: true,
+  },
+  {
+    icon: <FiZap />,
+    title: "Auto Respon",
+    text: "Otomatis membalas pesan sesuai command.",
+    blue: true,
+  },
+  {
+    icon: <FiUsers />,
+    title: "Group Tools",
+    text: "Kelola dan gunakan berbagai tools grup.",
+    blue: true,
+  },
+  {
+    icon: <FiSmartphone />,
+    title: "Multi Device",
+    text: "Support banyak session dan perangkat.",
+    blue: true,
+  },
+];
+
+const rentalPackages = [
+  {
+    name: "STARTER",
+    price: "15.000",
+    description: "Untuk penggunaan pribadi.",
+    features: [
+      "Bot WhatsApp 24/7",
+      "Pairing Code",
+      "Fitur dasar bot",
+      "1 Session",
+      "Support",
+    ],
+  },
+  {
+    name: "BUSINESS",
+    price: "30.000",
+    description: "Pilihan terbaik untuk bisnis.",
+    popular: true,
+    features: [
+      "Bot WhatsApp 24/7",
+      "Pairing Code",
+      "Semua fitur bot",
+      "Multi Session",
+      "Dashboard",
+      "Priority Support",
+    ],
+  },
+  {
+    name: "PRO",
+    price: "50.000",
+    description: "Untuk kebutuhan yang lebih besar.",
+    features: [
+      "Bot WhatsApp 24/7",
+      "Semua fitur",
+      "Multi Session",
+      "Dashboard",
+      "Monitoring",
+      "Priority Support",
+      "Custom fitur",
+    ],
+  },
+];
+
+function getPath() {
+  const path = window.location.pathname.replace(/\/+$/, "");
+  return path || "/";
 }
 
-function Logo({ small = false }) {
-  return (
-    <div className={`brand ${small ? "brand-small" : ""}`}>
-      <div className="brand-icon">
-        <span>◉</span>
-      </div>
+export default function App() {
+  const [path, setPath] = useState(getPath());
 
-      <div className="brand-text">
-        <b>SI</b>BOT
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    const onPop = () => setPath(getPath());
+
+    window.addEventListener("popstate", onPop);
+
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const navigate = (url) => {
+    window.history.pushState({}, "", url);
+    setPath(url);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (path === "/doc") {
+    return <DocsPage navigate={navigate} />;
+  }
+
+  if (path === "/gratis") {
+    return <FreeBotPage navigate={navigate} />;
+  }
+
+  if (path === "/sewa" || path === "/paket") {
+    return <RentalPage navigate={navigate} />;
+  }
+
+  return <HomePage navigate={navigate} />;
 }
 
-function Header({ onMenu }) {
+/* =========================================================
+   HEADER
+========================================================= */
+
+function Header({ navigate }) {
+  const [menu, setMenu] = useState(false);
+
   return (
     <header className="site-header">
-      <Logo />
+      <div className="container nav-inner">
+        <button
+          className="brand"
+          onClick={() => {
+            navigate("/");
+            setMenu(false);
+          }}
+        >
+          <div className="brand-logo">
+            <img src="/logo.png" alt="SIBOT" />
+          </div>
 
-      <div className="header-right">
-        <div className="online-badge">
-          <span className="online-dot"></span>
-          Online 24/7
+          <div className="brand-text">
+            <strong>SIBOT</strong>
+            <span>WhatsApp Automation</span>
+          </div>
+        </button>
+
+        <nav className={`nav-menu ${menu ? "open" : ""}`}>
+          <button
+            className="nav-link active"
+            onClick={() => {
+              navigate("/");
+              setMenu(false);
+            }}
+          >
+            Beranda
+          </button>
+
+          <button
+            className="nav-link"
+            onClick={() => {
+              navigate("/gratis");
+              setMenu(false);
+            }}
+          >
+            Bot Gratis
+          </button>
+
+          <button
+            className="nav-link"
+            onClick={() => {
+              navigate("/sewa");
+              setMenu(false);
+            }}
+          >
+            Sewa Bot
+          </button>
+
+          <button
+            className="nav-link"
+            onClick={() => {
+              navigate("/paket");
+              setMenu(false);
+            }}
+          >
+            Paket
+          </button>
+
+          <button
+            className="nav-link"
+            onClick={() => {
+              document
+                .getElementById("kontak")
+                ?.scrollIntoView({ behavior: "smooth" });
+              setMenu(false);
+            }}
+          >
+            Kontak
+          </button>
+        </nav>
+
+        <div className="nav-status">
+          <span className="status-dot" />
+          ONLINE
         </div>
 
-        <button className="menu-btn" onClick={onMenu}>
-          ☰
+        <button
+          className="mobile-menu"
+          onClick={() => setMenu((value) => !value)}
+          aria-label="Menu"
+        >
+          {menu ? <FiX /> : <FiMenu />}
         </button>
       </div>
     </header>
   );
 }
 
-function Home() {
-  const [menu, setMenu] = useState(false);
+/* =========================================================
+   HOME
+========================================================= */
 
+function HomePage({ navigate }) {
   return (
-    <div className="site">
-      <Header onMenu={() => setMenu(!menu)} />
-
-      {menu && (
-        <div className="mobile-menu">
-          <button onClick={() => navigate("/")}>Beranda</button>
-          <button onClick={() => navigate("/gratis")}>Bot Gratis</button>
-          <button onClick={() => navigate("/sewa")}>Sewa Bot</button>
-        </div>
-      )}
+    <div className="app-shell">
+      <Header navigate={navigate} />
 
       <main>
-        {/* HERO */}
         <section className="hero">
-          <div className="hero-copy">
-            <div className="eyebrow">
-              ⚡ SIBOT — BOT WHATSAPP MODERN
-            </div>
-
-            <h1>
-              Otomatisasi
-              <span> WhatsApp </span>
-              Tanpa Ribet.
-            </h1>
-
-            <p>
-              Buat bot WhatsApp sendiri secara gratis,
-              atau gunakan bot siap pakai untuk kebutuhan
-              bisnis dan toko online kamu.
-            </p>
-
-            <div className="hero-buttons">
-              <button
-                className="btn-primary"
-                onClick={() => navigate("/gratis")}
-              >
-                🚀 Mulai Bot Gratis
-              </button>
-
-              <button
-                className="btn-secondary"
-                onClick={() => navigate("/sewa")}
-              >
-                💼 Sewa Bot Bisnis
-              </button>
-            </div>
-
-            <div className="trust-row">
-              <span>✓ Gratis</span>
-              <span>✓ Pairing Code</span>
-              <span>✓ Mudah digunakan</span>
-            </div>
-          </div>
-
-          <div className="hero-visual">
-            <div className="glow-circle"></div>
-
-            <div className="robot-card">
-              <div className="robot-face">
-                <span>◠</span>
-                <span>◠</span>
+          <div className="hero-grid container">
+            <div className="hero-content">
+              <div className="eyebrow">
+                <span className="eyebrow-dot" />
+                WHATSAPP AUTOMATION PLATFORM
               </div>
 
-              <div className="robot-mouth"></div>
-            </div>
+              <h1>
+                Otomatisasi
+                <br />
+                <span>WhatsApp</span> Tanpa Ribet.
+              </h1>
 
-            <div className="whatsapp-bubble">
-              W
-            </div>
+              <p className="hero-description">
+                Buat bot WhatsApp sendiri secara gratis atau gunakan bot
+                profesional untuk kebutuhan bisnis kamu.
+              </p>
 
-            <div className="floating-feature feature-1">
-              ⚡ Auto Respon
-            </div>
-
-            <div className="floating-feature feature-2">
-              ☁ Downloader
-            </div>
-
-            <div className="floating-feature feature-3">
-              ✦ AI Chat
-            </div>
-          </div>
-        </section>
-
-        {/* PILIHAN LAYANAN */}
-        <section className="choice-section">
-          <div className="section-heading">
-            <span>PILIH LAYANAN</span>
-            <h2>Mau mulai dari mana?</h2>
-            <p>
-              Pilih layanan SIBOT yang sesuai dengan kebutuhan kamu.
-            </p>
-          </div>
-
-          <div className="choice-grid">
-
-            {/* FREE */}
-            <article className="choice-card free-card">
-              <div className="choice-icon">
-                🤖
-              </div>
-
-              <div className="choice-content">
-                <span className="choice-label blue">
-                  GRATIS
-                </span>
-
-                <h3>
-                  Mulai Bot <em>Gratis</em>
-                </h3>
-
-                <p>
-                  Buat dan hubungkan bot WhatsApp kamu
-                  sendiri tanpa biaya.
-                </p>
-
-                <ul>
-                  <li>✓ Pairing Code</li>
-                  <li>✓ Banyak fitur bot</li>
-                  <li>✓ Kelola session</li>
-                  <li>✓ Gratis</li>
-                </ul>
-
+              <div className="hero-buttons">
                 <button
-                  className="choice-btn blue-btn"
+                  className="btn btn-blue"
                   onClick={() => navigate("/gratis")}
                 >
-                  Mulai Gratis
-                  <span>→</span>
+                  <FiBot />
+                  Mulai Bot Gratis
+                  <FiArrowRight />
                 </button>
-              </div>
-            </article>
-
-            {/* RENT */}
-            <article className="choice-card rent-card">
-              <div className="choice-icon rent-icon">
-                💼
-              </div>
-
-              <div className="choice-content">
-                <span className="choice-label red">
-                  UNTUK BISNIS
-                </span>
-
-                <h3>
-                  Sewa Bot untuk <em>Bisnis</em>
-                </h3>
-
-                <p>
-                  Bot siap digunakan untuk toko,
-                  UMKM, customer service dan bisnis.
-                </p>
-
-                <ul>
-                  <li>✓ Bot berjalan 24/7</li>
-                  <li>✓ Tidak perlu setup sendiri</li>
-                  <li>✓ Dashboard & monitoring</li>
-                  <li>✓ Support</li>
-                </ul>
 
                 <button
-                  className="choice-btn red-btn"
+                  className="btn btn-outline"
                   onClick={() => navigate("/sewa")}
                 >
-                  Lihat Paket
-                  <span>→</span>
+                  Sewa Bot untuk Bisnis
+                  <FiArrowRight />
                 </button>
               </div>
-            </article>
 
-          </div>
-        </section>
+              <div className="hero-mini-stats">
+                <div>
+                  <strong>FREE</strong>
+                  <span>Bot Gratis</span>
+                </div>
 
-        {/* FEATURES */}
-        <section className="features-section">
-          <div className="section-heading">
-            <span>FITUR UNGGULAN</span>
+                <div>
+                  <strong>24/7</strong>
+                  <span>Bot Aktif</span>
+                </div>
 
-            <h2>
-              Semua yang kamu butuhkan
-              <br />
-              <strong>Dalam satu bot WhatsApp</strong>
-            </h2>
-          </div>
+                <div>
+                  <strong>FAST</strong>
+                  <span>Server Cepat</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="feature-grid">
-            <Feature
-              icon="✦"
-              title="AI Chat"
-              text="Chat pintar dengan teknologi AI."
-            />
+            <div className="hero-visual">
+              <div className="hero-glow" />
 
-            <Feature
-              icon="↓"
-              title="Downloader"
-              text="Download video, foto, audio dan lainnya."
-            />
+              <div className="orbit orbit-one" />
+              <div className="orbit orbit-two" />
 
-            <Feature
-              icon="☺"
-              title="Sticker Maker"
-              text="Buat sticker WhatsApp dengan mudah."
-            />
+              <div className="bot-orb">
+                <div className="bot-ring" />
 
-            <Feature
-              icon="⚡"
-              title="Auto Respon"
-              text="Balas pesan otomatis 24 jam."
-            />
+                <img src="/logo.png" alt="SIBOT" />
 
-            <Feature
-              icon="♟"
-              title="Group Tools"
-              text="Kelola grup WhatsApp dengan lebih mudah."
-            />
+                <div className="bot-scan" />
+              </div>
 
-            <Feature
-              icon="▣"
-              title="Multi Device"
-              text="Gunakan bot pada banyak perangkat."
-            />
-          </div>
-        </section>
+              <div className="floating-card floating-top">
+                <FiShield />
+                <div>
+                  <strong>Secure</strong>
+                  <span>Connection</span>
+                </div>
+              </div>
 
-        {/* CTA */}
-        <section className="bottom-cta">
-          <div>
-            <span>🚀</span>
-
-            <div>
-              <h3>Siap menggunakan SIBOT?</h3>
-              <p>
-                Pilih layanan yang sesuai dengan kebutuhanmu.
-              </p>
+              <div className="floating-card floating-bottom">
+                <FiZap />
+                <div>
+                  <strong>24/7</strong>
+                  <span>Online Bot</span>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          <button onClick={() => navigate("/gratis")}>
-            Mulai Sekarang →
-          </button>
+        <section className="services section">
+          <div className="container">
+            <SectionHeading
+              label="PILIH LAYANAN"
+              title="Mulai dari yang"
+              highlight="Kamu Butuhkan."
+              text="Gunakan bot gratis atau pilih bot sewaan untuk kebutuhan bisnis."
+            />
+
+            <div className="service-grid">
+              <ServiceCard
+                type="free"
+                icon={<FiBot />}
+                label="GRATIS"
+                title="Mulai Bot WhatsApp Gratis"
+                text="Buat dan gunakan bot WhatsApp kamu sendiri tanpa biaya bulanan."
+                list={[
+                  "Pairing Code",
+                  "Banyak fitur bot",
+                  "Multi Session",
+                  "Dashboard modern",
+                ]}
+                button="Mulai Sekarang"
+                onClick={() => navigate("/gratis")}
+              />
+
+              <ServiceCard
+                type="rental"
+                icon={<FiLayers />}
+                label="SEWA BOT"
+                title="Sewa Bot untuk Bisnis"
+                text="Bot WhatsApp siap pakai untuk membantu kebutuhan bisnis kamu 24/7."
+                list={[
+                  "Bot aktif 24/7",
+                  "Dashboard",
+                  "Support",
+                  "Paket mulai Rp15K/bulan",
+                ]}
+                button="Lihat Paket"
+                onClick={() => navigate("/sewa")}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="features section">
+          <div className="container">
+            <SectionHeading
+              label="FITUR UNGGULAN"
+              title="Semua yang Kamu Butuhkan"
+              highlight="Dalam Satu Bot WhatsApp"
+              text="Berbagai fitur siap digunakan untuk membuat aktivitas WhatsApp lebih mudah."
+            />
+
+            <div className="feature-grid">
+              {features.map((item) => (
+                <div className="feature-card" key={item.title}>
+                  <div className="feature-icon">{item.icon}</div>
+
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.text}</p>
+                  </div>
+
+                  <FiArrowRight className="feature-arrow" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="cta-section">
+          <div className="container">
+            <div className="cta-box">
+              <div className="cta-glow" />
+
+              <div className="cta-content">
+                <div className="eyebrow">
+                  <span className="eyebrow-dot" />
+                  SIBOT PLATFORM
+                </div>
+
+                <h2>
+                  Siap Menggunakan <span>SIBOT?</span>
+                </h2>
+
+                <p>
+                  Pilih layanan yang sesuai dengan kebutuhanmu dan mulai
+                  otomatisasi WhatsApp sekarang.
+                </p>
+              </div>
+
+              <div className="cta-buttons">
+                <button
+                  className="btn btn-blue"
+                  onClick={() => navigate("/gratis")}
+                >
+                  Bot Gratis
+                  <FiArrowRight />
+                </button>
+
+                <button
+                  className="btn btn-red"
+                  onClick={() => navigate("/sewa")}
+                >
+                  Sewa Bot
+                  <FiArrowRight />
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
 
-      <Footer />
+      <Footer navigate={navigate} />
     </div>
   );
 }
 
-function Feature({ icon, title, text }) {
+function SectionHeading({ label, title, highlight, text }) {
   return (
-    <div className="feature-card">
-      <div className="feature-icon">
-        {icon}
+    <div className="section-heading">
+      <div className="eyebrow">
+        <span className="eyebrow-dot" />
+        {label}
       </div>
 
-      <h3>{title}</h3>
+      <h2>
+        {title}
+        <br />
+        <span>{highlight}</span>
+      </h2>
 
       <p>{text}</p>
     </div>
   );
 }
 
-function Footer() {
+function ServiceCard({
+  type,
+  icon,
+  label,
+  title,
+  text,
+  list,
+  button,
+  onClick,
+}) {
   return (
-    <footer className="site-footer">
-      <Logo small />
+    <div className={`service-card ${type}`}>
+      <div className="service-icon">{icon}</div>
 
-      <div className="footer-links">
-        <button onClick={() => navigate("/")}>Beranda</button>
-        <button onClick={() => navigate("/gratis")}>Bot Gratis</button>
-        <button onClick={() => navigate("/sewa")}>Paket</button>
-      </div>
+      <div className="service-info">
+        <div className="service-label">{label}</div>
 
-      <p>
-        Powered by <strong>♥ DIN STORE</strong>
-      </p>
-    </footer>
-  );
-}
+        <h3>{title}</h3>
 
-/* =====================================================
-   HALAMAN SEWA BOT
-===================================================== */
+        <p>{text}</p>
 
-function RentalPage() {
-  const plans = [
-    {
-      name: "STARTER",
-      price: "15.000",
-      desc: "Untuk kebutuhan pribadi dan bisnis kecil.",
-      features: [
-        "1 Bot WhatsApp",
-        "Bot aktif 24/7",
-        "Auto Respon",
-        "Menu Bot",
-        "Downloader",
-        "Support",
-      ],
-    },
-    {
-      name: "BUSINESS",
-      price: "30.000",
-      desc: "Cocok untuk toko online dan UMKM.",
-      popular: true,
-      features: [
-        "1 Bot WhatsApp",
-        "Bot aktif 24/7",
-        "Semua fitur Starter",
-        "AI Chat",
-        "Group Tools",
-        "Dashboard",
-        "Monitoring",
-        "Priority Support",
-      ],
-    },
-    {
-      name: "PRO",
-      price: "50.000",
-      desc: "Untuk bisnis dengan kebutuhan lebih besar.",
-      features: [
-        "Bot WhatsApp 24/7",
-        "Semua fitur Business",
-        "Multi Session",
-        "Advanced Tools",
-        "Monitoring penuh",
-        "Priority Support",
-      ],
-    },
-  ];
-
-  return (
-    <div className="site">
-      <Header onMenu={() => navigate("/")} />
-
-      <main className="inner-page">
-        <button
-          className="back-btn"
-          onClick={() => navigate("/")}
-        >
-          ← Kembali
-        </button>
-
-        <div className="inner-heading">
-          <span>💼 SIBOT BUSINESS</span>
-
-          <h1>
-            Sewa Bot untuk
-            <strong> Bisnis</strong>
-          </h1>
-
-          <p>
-            Bot WhatsApp siap pakai untuk membantu
-            mengelola pelanggan, toko dan bisnis kamu.
-          </p>
-        </div>
-
-        <div className="business-benefits">
-          <Benefit icon="⚡" text="Aktif 24/7" />
-          <Benefit icon="☁" text="Server dikelola kami" />
-          <Benefit icon="🛡" text="Support" />
-          <Benefit icon="📊" text="Monitoring" />
-        </div>
-
-        <div className="pricing-grid">
-          {plans.map((plan) => (
-            <div
-              className={`pricing-card ${
-                plan.popular ? "popular" : ""
-              }`}
-              key={plan.name}
-            >
-              {plan.popular && (
-                <div className="popular-label">
-                  PALING POPULER
-                </div>
-              )}
-
-              <span className="plan-name">
-                {plan.name}
-              </span>
-
-              <h2>
-                <small>Rp</small>
-                {plan.price}
-                <span>/bulan</span>
-              </h2>
-
-              <p className="plan-desc">
-                {plan.desc}
-              </p>
-
-              <div className="plan-line"></div>
-
-              <ul>
-                {plan.features.map((feature) => (
-                  <li key={feature}>
-                    <span>✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                className="plan-btn"
-                onClick={() =>
-                  window.open(
-                    "https://wa.me/628384375",
-                    "_blank"
-                  )
-                }
-              >
-                Sewa Paket →
-              </button>
+        <div className="service-list">
+          {list.map((item) => (
+            <div key={item}>
+              <FiCheck />
+              {item}
             </div>
           ))}
         </div>
 
-        <div className="business-note">
-          <strong>Butuh paket khusus?</strong>
+        <button className="service-button" onClick={onClick}>
+          {button}
+          <FiArrowRight />
+        </button>
+      </div>
 
-          <p>
-            Hubungi admin untuk kebutuhan bot bisnis,
-            custom fitur atau jumlah bot lebih banyak.
-          </p>
-
-          <button
-            onClick={() =>
-              window.open(
-                "https://wa.me/628384375",
-                "_blank"
-              )
-            }
-          >
-            Hubungi Admin
-          </button>
-        </div>
-      </main>
-
-      <Footer />
+      <div className="service-number">
+        {type === "free" ? "01" : "02"}
+      </div>
     </div>
   );
 }
 
-function Benefit({ icon, text }) {
-  return (
-    <div className="benefit">
-      <span>{icon}</span>
-      {text}
-    </div>
-  );
-}
+/* =========================================================
+   FREE BOT
+========================================================= */
 
-/* =====================================================
-   BOT GRATIS
-===================================================== */
+function FreeBotPage({ navigate }) {
+  const [number, setNumber] = useState("");
+  const [pairingCode, setPairingCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [logoutId, setLogoutId] = useState(null);
 
-function FreeBotPage() {
-  const [page, setPage] = useState("dashboard");
-
-  const [serverOnline, setServerOnline] =
-    useState(true);
-
-  const [botConnected, setBotConnected] =
-    useState(false);
-
-  const [sessions, setSessions] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState("");
-
-  const [phoneNumber, setPhoneNumber] =
-    useState("");
-
-  const [pairingCode, setPairingCode] =
-    useState("");
-
-  const [pairingLoading, setPairingLoading] =
-    useState(false);
-
-  const [copied, setCopied] =
-    useState(false);
-
-  const [logoutTarget, setLogoutTarget] =
-    useState(null);
-
-  const [logoutNumber, setLogoutNumber] =
-    useState("");
-
-  const [logoutLoading, setLogoutLoading] =
-    useState(false);
-
-  const showMessage = (text) => {
-    setMessage(text);
-
-    setTimeout(() => {
-      setMessage("");
-    }, 4000);
-  };
-
-  const normalizeNumber = (number) => {
-    let value = String(number || "")
-      .replace(/\D/g, "");
-
-    if (value.startsWith("0")) {
-      value = "62" + value.substring(1);
-    }
-
-    if (value.startsWith("8")) {
-      value = "62" + value;
-    }
-
-    return value;
-  };
-
-  const maskNumber = (number) => {
-    if (!number) return "-";
-
-    const value = String(number);
-
-    if (value.length <= 4) return value;
-
-    return (
-      value.substring(0, 5) +
-      "*".repeat(
-        Math.max(2, value.length - 7)
-      ) +
-      value.substring(value.length - 2)
-    );
-  };
-
-  const loadStatus = async () => {
+  const loadData = async () => {
     try {
-      setLoading(true);
-
-      const response = await fetch(
-        `${API}/api/status`,
-        {
-          cache: "no-store",
-        }
-      );
+      const response = await fetch(`${API}/api/status`);
 
       if (!response.ok) {
-        throw new Error();
+        throw new Error("Server error");
       }
 
       const data = await response.json();
 
-      setServerOnline(
-        data.success === true ||
-        data.server === "online"
-      );
+      setStatus(data);
 
-      setBotConnected(
-        data.botConnected === true
-      );
-
-      setSessions(
-        Array.isArray(data.sessions)
-          ? data.sessions
-          : []
-      );
+      if (Array.isArray(data.sessions)) {
+        setSessions(data.sessions);
+      } else if (Array.isArray(data)) {
+        setSessions(data);
+      }
     } catch {
-      setServerOnline(false);
+      setStatus(null);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+
+    const interval = setInterval(loadData, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const requestPairing = async () => {
+    setError("");
+    setPairingCode("");
+
+    const cleanNumber = number.replace(/\D/g, "");
+
+    if (!cleanNumber) {
+      setError("Masukkan nomor WhatsApp terlebih dahulu.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API}/api/pair`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          number: cleanNumber,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Gagal mendapatkan pairing code.");
+      }
+
+      const code =
+        data.code ||
+        data.pairingCode ||
+        data.pairing ||
+        data.data?.code ||
+        "";
+
+      if (!code) {
+        throw new Error("Pairing code tidak ditemukan dari server.");
+      }
+
+      setPairingCode(String(code).toUpperCase());
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadStatus();
-  }, []);
-
-  const startPairing = async () => {
-    if (!phoneNumber.trim()) {
-      showMessage(
-        "Masukkan nomor WhatsApp terlebih dahulu."
-      );
-      return;
-    }
-
-    const number =
-      normalizeNumber(phoneNumber);
-
-    if (!number || number.length < 10) {
-      showMessage(
-        "Nomor WhatsApp tidak valid."
-      );
-      return;
-    }
-
-    try {
-      setPairingLoading(true);
-      setPairingCode("");
-
-      const response = await fetch(
-        `${API}/api/pair`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({ number }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!data.success) {
-        showMessage(
-          data.message ||
-          "Gagal memulai pairing."
-        );
-        return;
-      }
-
-      if (data.pairingCode) {
-        setPairingCode(
-          data.pairingCode
-        );
-
-        showMessage(
-          "Kode pairing berhasil dibuat!"
-        );
-      }
-
-      loadStatus();
-    } catch {
-      showMessage(
-        "Tidak dapat menghubungi server API."
-      );
-    } finally {
-      setPairingLoading(false);
-    }
-  };
-
-  const copyPairingCode = async () => {
+  const copyCode = async () => {
     if (!pairingCode) return;
 
-    await navigator.clipboard.writeText(
-      pairingCode
-    );
-
-    setCopied(true);
-
-    showMessage(
-      "Kode pairing berhasil disalin."
-    );
-
-    setTimeout(
-      () => setCopied(false),
-      2500
-    );
-  };
-
-  const confirmLogout = async () => {
-    if (!logoutTarget) return;
-
-    const input =
-      normalizeNumber(logoutNumber);
-
-    const target =
-      normalizeNumber(
-        logoutTarget.number ||
-        logoutTarget.sessionId
-      );
-
-    if (!input) {
-      showMessage(
-        "Masukkan nomor WhatsApp lengkap."
-      );
-      return;
-    }
-
-    if (input !== target) {
-      showMessage(
-        "Nomor tidak cocok dengan sesi."
-      );
-      return;
-    }
-
     try {
-      setLogoutLoading(true);
+      await navigator.clipboard.writeText(pairingCode);
+      setCopied(true);
 
-      const response = await fetch(
-        `${API}/api/logout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            sessionId:
-              logoutTarget.sessionId ||
-              logoutTarget,
-          }),
-        }
-      );
-
-      const data =
-        await response.json();
-
-      if (data.success) {
-        setLogoutTarget(null);
-        setLogoutNumber("");
-
-        showMessage(
-          "Sesi berhasil dihapus."
-        );
-
-        loadStatus();
-      } else {
-        showMessage(
-          data.message ||
-          "Gagal logout sesi."
-        );
-      }
+      setTimeout(() => setCopied(false), 1800);
     } catch {
-      showMessage(
-        "Gagal menghubungi server API."
-      );
-    } finally {
-      setLogoutLoading(false);
+      setError("Tidak dapat menyalin kode.");
     }
   };
+
+  const logoutSession = async (sessionId) => {
+    try {
+      await fetch(`${API}/api/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+        }),
+      });
+
+      setLogoutId(null);
+      await loadData();
+    } catch {
+      setError("Gagal menghapus session.");
+    }
+  };
+
+  const online =
+    status?.online ??
+    status?.server ??
+    status?.status === "online" ??
+    true;
 
   return (
-    <div className="site">
-      {message && (
-        <div className="toast">
-          {message}
-        </div>
-      )}
+    <div className="app-shell">
+      <Header navigate={navigate} />
 
-      <header className="bot-header">
-        <button
-          className="back-mini"
-          onClick={() => navigate("/")}
-        >
-          ←
-        </button>
+      <main className="inner-page">
+        <div className="container">
+          <button className="back-button" onClick={() => navigate("/")}>
+            <FiArrowLeft />
+            Kembali ke Beranda
+          </button>
 
-        <Logo small />
-
-        <div className="bot-online">
-          <span></span>
-          {serverOnline
-            ? "Online"
-            : "Offline"}
-        </div>
-      </header>
-
-      <main className="free-panel">
-
-        <div className="free-title">
-          <span>🆓 SIBOT GRATIS</span>
-
-          <h1>
-            Buat Bot WhatsApp
-            <strong> Gratis.</strong>
-          </h1>
-
-          <p>
-            Hubungkan WhatsApp kamu menggunakan
-            pairing code dan mulai menggunakan bot.
-          </p>
-        </div>
-
-        {page === "dashboard" && (
-          <>
-            <div className="free-stats">
-              <div>
-                <span>API SERVER</span>
-                <strong>
-                  {serverOnline
-                    ? "ONLINE"
-                    : "OFFLINE"}
-                </strong>
-              </div>
-
-              <div>
-                <span>WHATSAPP</span>
-                <strong>
-                  {botConnected
-                    ? "TERHUBUNG"
-                    : "SIAP PAIRING"}
-                </strong>
-              </div>
-
-              <div
-                onClick={() =>
-                  setPage("sessions")
-                }
-              >
-                <span>SESSIONS</span>
-                <strong>
-                  {sessions.length}
-                </strong>
-              </div>
+          <section className="page-hero free-page-hero">
+            <div className="page-badge blue-badge">
+              <span />
+              BOT GRATIS
             </div>
 
-            <div className="free-hero">
-              <span>BOT WHATSAPP GRATIS</span>
+            <h1>
+              Buat Bot WhatsApp
+              <br />
+              <span>Gratis.</span>
+            </h1>
 
-              <h2>
-                Mulai buat bot kamu
-                sekarang.
-              </h2>
+            <p>
+              Hubungkan nomor WhatsApp kamu menggunakan pairing code dan
+              kelola bot langsung dari SIBOT.
+            </p>
+          </section>
 
-              <p>
-                Tidak perlu bayar.
-                Hubungkan WhatsApp
-                dengan pairing code.
-              </p>
+          <div className="stats-grid">
+            <StatCard
+              icon={<FiServer />}
+              title="API SERVER"
+              value={online ? "ONLINE" : "OFFLINE"}
+              online={online}
+            />
 
-              <button
-                onClick={() =>
-                  setPage("pairing")
-                }
-              >
-                Hubungkan WhatsApp →
+            <StatCard
+              icon={<FiSmartphone />}
+              title="WHATSAPP"
+              value="SIAP PAIRING"
+              online
+            />
+
+            <StatCard
+              icon={<FiLayers />}
+              title="SESSIONS"
+              value={String(sessions.length)}
+              online
+            />
+          </div>
+
+          <div className="free-layout">
+            <section className="pair-card">
+              <div className="card-top">
+                <div>
+                  <div className="small-label">
+                    <FiZap />
+                    QUICK START
+                  </div>
+
+                  <h2>Mulai Sekarang</h2>
+
+                  <p>
+                    Masukkan nomor WhatsApp yang ingin digunakan untuk bot.
+                  </p>
+                </div>
+
+                <div className="card-icon">
+                  <FiSmartphone />
+                </div>
+              </div>
+
+              <div className="pair-form">
+                <label>Nomor WhatsApp</label>
+
+                <div className="input-wrap">
+                  <span>+</span>
+
+                  <input
+                    type="tel"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
+                    placeholder="628xxxxxxxxxx"
+                  />
+                </div>
+
+                <small>
+                  Gunakan format internasional, contoh: 628123456789.
+                </small>
+
+                <button
+                  className="btn btn-blue full"
+                  onClick={requestPairing}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <FiRefreshCw className="spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <FiZap />
+                      Dapatkan Pairing Code
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {error && (
+                <div className="error-box">
+                  <FiX />
+                  {error}
+                </div>
+              )}
+
+              {pairingCode && (
+                <div className="pair-result">
+                  <div className="result-label">
+                    <span className="online-pulse" />
+                    PAIRING CODE BERHASIL
+                  </div>
+
+                  <div className="pair-code">{pairingCode}</div>
+
+                  <button className="copy-button" onClick={copyCode}>
+                    {copied ? <FiCheck /> : <FiCopy />}
+                    {copied ? "Tersalin" : "Salin Code"}
+                  </button>
+
+                  <div className="pair-note">
+                    Buka WhatsApp → Perangkat Tertaut → Tautkan Perangkat →
+                    Tautkan dengan nomor telepon.
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="info-card">
+              <div className="small-label">
+                <FiShield />
+                PRIVACY & SECURITY
+              </div>
+
+              <h2>Aman & Mudah Digunakan</h2>
+
+              <div className="security-list">
+                <SecurityItem
+                  title="Tanpa Password WhatsApp"
+                  text="Kamu tidak perlu memberikan password WhatsApp."
+                />
+
+                <SecurityItem
+                  title="Pairing Code"
+                  text="Koneksi menggunakan sistem pairing resmi."
+                />
+
+                <SecurityItem
+                  title="Session Pribadi"
+                  text="Session bot hanya digunakan untuk koneksi bot."
+                />
+
+                <SecurityItem
+                  title="Kelola Session"
+                  text="Kamu dapat menghapus session kapan saja."
+                />
+              </div>
+            </section>
+          </div>
+
+          <section className="sessions-section">
+            <div className="section-row">
+              <div>
+                <div className="small-label">
+                  <FiLayers />
+                  ACTIVE SESSIONS
+                </div>
+
+                <h2>Session Bot</h2>
+              </div>
+
+              <button className="refresh-button" onClick={loadData}>
+                <FiRefreshCw />
+                Refresh
               </button>
             </div>
 
-            <div className="free-feature-list">
-              <FreeFeature
-                icon="⚡"
-                title="Auto Respon"
-              />
-
-              <FreeFeature
-                icon="↓"
-                title="Downloader"
-              />
-
-              <FreeFeature
-                icon="✦"
-                title="AI Chat"
-              />
-
-              <FreeFeature
-                icon="☺"
-                title="Sticker Maker"
-              />
-            </div>
-          </>
-        )}
-
-        {page === "pairing" && (
-          <div className="pairing-panel">
-
-            <button
-              className="panel-back"
-              onClick={() =>
-                setPage("dashboard")
-              }
-            >
-              ← Kembali
-            </button>
-
-            <div className="pairing-icon">
-              W
-            </div>
-
-            <span>
-              CONNECT WHATSAPP
-            </span>
-
-            <h2>
-              Hubungkan WhatsApp
-            </h2>
-
-            <p>
-              Masukkan nomor WhatsApp
-              yang ingin digunakan sebagai bot.
-            </p>
-
-            <label>
-              Nomor WhatsApp
-            </label>
-
-            <div className="phone-input">
-              <span>+62</span>
-
-              <input
-                type="tel"
-                placeholder="81234567890"
-                value={phoneNumber.replace(
-                  /^62/,
-                  ""
-                )}
-                onChange={(e) =>
-                  setPhoneNumber(
-                    "62" +
-                    e.target.value.replace(
-                      /\D/g,
-                      ""
-                    )
-                  )
-                }
-                disabled={pairingLoading}
-              />
-            </div>
-
-            <button
-              className="pair-btn"
-              onClick={startPairing}
-              disabled={pairingLoading}
-            >
-              {pairingLoading
-                ? "Memproses..."
-                : "Dapatkan Pairing Code"}
-            </button>
-
-            {pairingCode && (
-              <div className="pair-result">
-                <span>
-                  KODE PAIRING
-                </span>
-
-                <div>
-                  <strong>
-                    {pairingCode}
-                  </strong>
-
-                  <button
-                    onClick={
-                      copyPairingCode
-                    }
-                  >
-                    {copied
-                      ? "✓"
-                      : "Salin"}
-                  </button>
-                </div>
-
-                <ol>
-                  <li>
-                    Buka WhatsApp.
-                  </li>
-
-                  <li>
-                    Masuk ke
-                    Perangkat Tertaut.
-                  </li>
-
-                  <li>
-                    Pilih Tautkan Perangkat.
-                  </li>
-
-                  <li>
-                    Gunakan kode pairing
-                    di atas.
-                  </li>
-                </ol>
-              </div>
-            )}
-          </div>
-        )}
-
-        {page === "sessions" && (
-          <div className="session-panel">
-
-            <button
-              className="panel-back"
-              onClick={() =>
-                setPage("dashboard")
-              }
-            >
-              ← Kembali
-            </button>
-
-            <h2>
-              Session Bot
-            </h2>
-
-            <p>
-              Perangkat WhatsApp yang
-              sedang terhubung.
-            </p>
-
-            <button
-              className="refresh"
-              onClick={loadStatus}
-            >
-              {loading
-                ? "Memuat..."
-                : "↻ Refresh"}
-            </button>
-
             {sessions.length === 0 ? (
-              <div className="empty">
-                Belum ada session aktif.
+              <div className="empty-sessions">
+                <FiBot />
+                <strong>Belum ada session</strong>
+                <span>Session bot yang aktif akan muncul di sini.</span>
               </div>
             ) : (
-              sessions.map(
-                (sess, index) => {
-                  const raw =
-                    sess.sessionId ||
-                    sess;
+              <div className="session-list">
+                {sessions.map((session, index) => {
+                  const id =
+                    session.id ||
+                    session.sessionId ||
+                    session.jid ||
+                    session.number ||
+                    index;
+
+                  const sessionNumber =
+                    session.number ||
+                    session.phone ||
+                    session.jid ||
+                    "WhatsApp Session";
 
                   return (
-                    <div
-                      className="session-card"
-                      key={index}
-                    >
-                      <div>
+                    <div className="session-item" key={id}>
+                      <div className="session-avatar">
+                        <FiSmartphone />
+                      </div>
+
+                      <div className="session-main">
+                        <strong>{maskNumber(String(sessionNumber))}</strong>
                         <span>
-                          SESSION
+                          <i />
+                          Connected
                         </span>
-
-                        <strong>
-                          {maskNumber(raw)}
-                        </strong>
-
-                        <small>
-                          ● TERHUBUNG
-                        </small>
                       </div>
 
                       <button
-                        onClick={() =>
-                          setLogoutTarget(
-                            sess
-                          )
-                        }
+                        className="delete-session"
+                        onClick={() => setLogoutId(id)}
                       >
-                        Hapus
+                        <FiTrash2 />
                       </button>
                     </div>
                   );
-                }
-              )
+                })}
+              </div>
             )}
-          </div>
-        )}
+          </section>
+        </div>
+      </main>
 
-        {logoutTarget && (
-          <div className="modal">
-            <div className="modal-box">
-              <h3>
-                Hapus Session?
-              </h3>
+      {logoutId !== null && (
+        <div className="modal-overlay">
+          <div className="confirm-modal">
+            <button
+              className="modal-close"
+              onClick={() => setLogoutId(null)}
+            >
+              <FiX />
+            </button>
 
-              <p>
-                Masukkan nomor WhatsApp
-                untuk mengonfirmasi.
-              </p>
+            <div className="danger-icon">
+              <FiTrash2 />
+            </div>
 
-              <div className="phone-input">
-                <span>+62</span>
+            <h3>Hapus Session?</h3>
 
-                <input
-                  type="tel"
-                  placeholder="81234567890"
-                  value={logoutNumber.replace(
-                    /^62/,
-                    ""
-                  )}
-                  onChange={(e) =>
-                    setLogoutNumber(
-                      "62" +
-                      e.target.value.replace(
-                        /\D/g,
-                        ""
-                      )
-                    )
-                  }
-                />
-              </div>
+            <p>
+              Session WhatsApp ini akan diputus dari SIBOT.
+            </p>
 
-              <div className="modal-buttons">
-                <button
-                  onClick={() =>
-                    setLogoutTarget(null)
-                  }
-                >
-                  Batal
-                </button>
+            <div className="modal-buttons">
+              <button
+                className="btn btn-outline"
+                onClick={() => setLogoutId(null)}
+              >
+                Batal
+              </button>
 
-                <button
-                  className="danger"
-                  onClick={confirmLogout}
-                >
-                  {logoutLoading
-                    ? "Memproses..."
-                    : "Hapus"}
-                </button>
-              </div>
+              <button
+                className="btn btn-danger"
+                onClick={() => logoutSession(logoutId)}
+              >
+                Hapus Session
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-      </main>
+      <Footer navigate={navigate} />
     </div>
   );
 }
 
-function FreeFeature({ icon, title }) {
+function StatCard({ icon, title, value, online }) {
   return (
-    <div>
-      <span>{icon}</span>
-      <strong>{title}</strong>
+    <div className="stat-card">
+      <div className="stat-icon">{icon}</div>
+
+      <div>
+        <span>{title}</span>
+
+        <strong className={online ? "green-text" : "red-text"}>
+          {value}
+        </strong>
+      </div>
     </div>
   );
 }
 
-/* =====================================================
-   ROUTER SEDERHANA
-===================================================== */
+function SecurityItem({ title, text }) {
+  return (
+    <div className="security-item">
+      <div className="security-check">
+        <FiCheck />
+      </div>
 
-function App() {
-  const [path, setPath] =
-    useState(window.location.pathname);
+      <div>
+        <strong>{title}</strong>
+        <span>{text}</span>
+      </div>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const update = () =>
-      setPath(window.location.pathname);
+function maskNumber(value) {
+  if (!value) return "Unknown";
 
-    window.addEventListener(
-      "popstate",
-      update
+  const clean = value.replace(/\D/g, "");
+
+  if (clean.length <= 7) return value;
+
+  return `${clean.slice(0, 4)}******${clean.slice(-3)}`;
+}
+
+/* =========================================================
+   RENTAL
+========================================================= */
+
+function RentalPage({ navigate }) {
+  const order = (pkg) => {
+    const message = encodeURIComponent(
+      `Halo DIN STORE, saya ingin sewa Bot WhatsApp.\n\nPaket: ${pkg}\n\nMohon informasi selanjutnya.`
     );
 
-    return () =>
-      window.removeEventListener(
-        "popstate",
-        update
-      );
-  }, []);
+    if (RENTAL_WA.includes("x")) {
+      alert("Silakan isi nomor WhatsApp admin di RENTAL_WA pada App.jsx.");
+      return;
+    }
 
-  if (path === "/doc") {
-    return <Docs />;
-  }
+    window.open(`https://wa.me/${RENTAL_WA}?text=${message}`, "_blank");
+  };
 
-  if (path === "/gratis") {
-    return <FreeBotPage />;
-  }
+  return (
+    <div className="app-shell">
+      <Header navigate={navigate} />
 
-  if (path === "/sewa") {
-    return <RentalPage />;
-  }
+      <main className="inner-page rental-page">
+        <div className="container">
+          <button className="back-button" onClick={() => navigate("/")}>
+            <FiArrowLeft />
+            Kembali ke Beranda
+          </button>
 
-  return <Home />;
+          <section className="page-hero rental-hero">
+            <div className="page-badge red-badge">
+              <span />
+              UNTUK BISNIS
+            </div>
+
+            <h1>
+              Sewa Bot WhatsApp
+              <br />
+              <span>Siap Pakai.</span>
+            </h1>
+
+            <p>
+              Fokus menjalankan bisnis, biarkan SIBOT menangani otomatisasi
+              WhatsApp kamu selama 24/7.
+            </p>
+          </section>
+
+          <div className="business-benefits">
+            <Benefit
+              icon={<FiZap />}
+              title="Aktif 24/7"
+              text="Bot siap digunakan kapan saja."
+            />
+
+            <Benefit
+              icon={<FiSettings />}
+              title="Mudah Dikelola"
+              text="Kelola bot dari dashboard."
+            />
+
+            <Benefit
+              icon={<FiShield />}
+              title="Stabil & Aman"
+              text="Koneksi bot dirancang stabil."
+            />
+
+            <Benefit
+              icon={<FiMessageCircle />}
+              title="Support"
+              text="Bantuan ketika kamu membutuhkannya."
+            />
+          </div>
+
+          <section className="pricing-section">
+            <div className="section-heading">
+              <div className="eyebrow red-eyebrow">
+                <span className="eyebrow-dot" />
+                PILIH PAKET
+              </div>
+
+              <h2>
+                Paket Sewa Bot
+                <br />
+                <span>Untuk Bisnis Kamu.</span>
+              </h2>
+
+              <p>
+                Pilih paket sesuai kebutuhan. Bisa upgrade kapan saja.
+              </p>
+            </div>
+
+            <div className="pricing-grid">
+              {rentalPackages.map((pkg) => (
+                <div
+                  className={`price-card ${
+                    pkg.popular ? "popular" : ""
+                  }`}
+                  key={pkg.name}
+                >
+                  {pkg.popular && (
+                    <div className="popular-label">PALING POPULER</div>
+                  )}
+
+                  <div className="price-top">
+                    <span>{pkg.name}</span>
+
+                    {pkg.popular ? <FiZap /> : <FiBot />}
+                  </div>
+
+                  <h3>
+                    <small>Rp</small>
+                    {pkg.price}
+                  </h3>
+
+                  <div className="per-month">/ bulan</div>
+
+                  <p className="price-description">{pkg.description}</p>
+
+                  <div className="price-divider" />
+
+                  <div className="price-features">
+                    {pkg.features.map((feature) => (
+                      <div key={feature}>
+                        <FiCheck />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    className={
+                      pkg.popular
+                        ? "price-button popular-button"
+                        : "price-button"
+                    }
+                    onClick={() => order(pkg.name)}
+                  >
+                    Pilih Paket
+                    <FiArrowRight />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="custom-package">
+            <div>
+              <div className="small-label">
+                <FiMessageCircle />
+                CUSTOM PACKAGE
+              </div>
+
+              <h2>Butuh paket khusus?</h2>
+
+              <p>
+                Hubungi kami jika membutuhkan fitur, kapasitas, atau
+                konfigurasi khusus untuk bisnis.
+              </p>
+            </div>
+
+            <button
+              className="btn btn-red"
+              onClick={() => order("CUSTOM")}
+            >
+              Hubungi Admin
+              <FiExternalLink />
+            </button>
+          </section>
+        </div>
+      </main>
+
+      <Footer navigate={navigate} />
+    </div>
+  );
 }
 
-export default App;
+function Benefit({ icon, title, text }) {
+  return (
+    <div className="benefit-card">
+      <div className="benefit-icon">{icon}</div>
+
+      <div>
+        <strong>{title}</strong>
+        <span>{text}</span>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   DOC
+========================================================= */
+
+function DocsPage({ navigate }) {
+  return (
+    <div className="app-shell">
+      <Header navigate={navigate} />
+
+      <main className="inner-page">
+        <div className="container">
+          <button className="back-button" onClick={() => navigate("/")}>
+            <FiArrowLeft />
+            Kembali
+          </button>
+
+          <section className="page-hero">
+            <div className="page-badge blue-badge">
+              <span />
+              DOCUMENTATION
+            </div>
+
+            <h1>
+              SIBOT
+              <br />
+              <span>Documentation.</span>
+            </h1>
+
+            <p>
+              Dokumentasi dan informasi penggunaan platform SIBOT.
+            </p>
+          </section>
+
+          <div className="doc-grid">
+            <div className="doc-card">
+              <FiBot />
+              <h3>Bot Gratis</h3>
+              <p>
+                Gunakan pairing code untuk menghubungkan WhatsApp ke SIBOT.
+              </p>
+            </div>
+
+            <div className="doc-card">
+              <FiLayers />
+              <h3>Multi Session</h3>
+              <p>
+                Kelola beberapa session bot dari satu dashboard.
+              </p>
+            </div>
+
+            <div className="doc-card">
+              <FiShield />
+              <h3>Keamanan</h3>
+              <p>
+                Jangan pernah membagikan kode pairing atau data sensitif
+                kepada pihak lain.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer navigate={navigate} />
+    </div>
+  );
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+function Footer({ navigate }) {
+  return (
+    <footer className="footer" id="kontak">
+      <div className="container footer-grid">
+        <div className="footer-brand">
+          <button className="brand" onClick={() => navigate("/")}>
+            <div className="brand-logo">
+              <img src="/logo.png" alt="SIBOT" />
+            </div>
+
+            <div className="brand-text">
+              <strong>SIBOT</strong>
+              <span>WhatsApp Automation</span>
+            </div>
+          </button>
+
+          <p>
+            Platform otomatisasi WhatsApp untuk kebutuhan pribadi maupun
+            bisnis.
+          </p>
+
+          <div className="footer-status">
+            <span className="status-dot" />
+            All Systems Operational
+          </div>
+        </div>
+
+        <div className="footer-column">
+          <h4>LAYANAN</h4>
+
+          <button onClick={() => navigate("/gratis")}>
+            Bot Gratis
+          </button>
+
+          <button onClick={() => navigate("/sewa")}>
+            Sewa Bot
+          </button>
+
+          <button onClick={() => navigate("/paket")}>
+            Paket Sewa
+          </button>
+        </div>
+
+        <div className="footer-column">
+          <h4>INFORMASI</h4>
+
+          <button onClick={() => navigate("/")}>Beranda</button>
+
+          <button onClick={() => navigate("/doc")}>
+            Dokumentasi
+          </button>
+        </div>
+
+        <div className="footer-column">
+          <h4>KONTAK</h4>
+
+          <span>DIN STORE</span>
+          <span>WhatsApp Support</span>
+          <span>Online 24/7</span>
+        </div>
+      </div>
+
+      <div className="footer-bottom container">
+        <span>© {new Date().getFullYear()} SIBOT</span>
+        <span>
+          Powered by <strong>DIN STORE</strong>
+        </span>
+      </div>
+    </footer>
+  );
+}
